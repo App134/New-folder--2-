@@ -1,0 +1,74 @@
+.excel-uploader {
+    margin-bottom: 2rem;
+}
+
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-primary);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.upload-icon {
+    margin-bottom: 1rem;
+    color: var(--accent-primary);
+}
+
+.upload-zone p {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.upload-zone span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.file-info-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--bg-card);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.file-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.file-icon {
+    color: var(--accent-secondary);
+}
+
+.filename {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.remove-btn {
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.remove-btn:hover {
+    color: var(--accent-danger);
+}
+
+.error-msg {
+    color: var(--accent-danger);
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
