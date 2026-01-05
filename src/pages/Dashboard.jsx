@@ -4,7 +4,7 @@ import RevenueChart from '../components/dashboard/RevenueChart';
 import ExpensePieChart from '../components/dashboard/ExpensePieChart';
 import TrendLineChart from '../components/dashboard/TrendLineChart';
 import GoogleSheetSync from '../components/google/GoogleSheetSync';
-import FirestoreDataList from '../components/dashboard/FirestoreDataList';
+import DataList from '../components/dashboard/DataList';
 import ExcelChart from '../components/excel/ExcelChart'; // Keeping ExcelChart for visualization for now
 import { useState, useMemo } from 'react';
 import { DollarSign, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -76,14 +76,15 @@ const Dashboard = () => {
                 <div className="chart-card full-width">
                     <h3>Google Sheets Integration</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                        Sync data from Google Sheets directly to your Firestore database.
+                        Sync data from Google Sheets directly to your local database.
                     </p>
                     <GoogleSheetSync onDataSynced={handleExcelData} />
 
                     <div style={{ marginTop: '2rem' }}>
-                        <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Firebase Database Records</h4>
-                        <FirestoreDataList />
+                        <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Database Records</h4>
+                        <DataList />
                     </div>
+
 
                     {excelData.length > 0 && (
                         <div style={{ marginTop: '2rem', overflowX: 'auto' }}>

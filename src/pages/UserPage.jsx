@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import './UserPage.css'; // New premium styles
 import Footer from '../components/layout/Footer';
+import BackButton from '../components/common/BackButton';
 
 const UserPage = () => {
     const { currency, updateCurrency, theme, updateTheme } = useData();
@@ -33,6 +34,7 @@ const UserPage = () => {
 
     return (
         <div className="user-page-container">
+            <BackButton />
             <div className="user-content-wrapper">
                 <h2 className="page-title">User Settings</h2>
 

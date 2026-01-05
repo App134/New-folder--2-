@@ -1,14 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../config/firebase';
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    GoogleAuthProvider,
-    signInWithPopup,
-    updateProfile
-} from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -19,49 +9,67 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const signup = async (email, password, name) => {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: name });
-        // Manually update state to ensure displayName is immediately available
-        setCurrentUser({ ...userCredential.user, displayName: name });
-        return userCredential;
+        // Mock Signup
+        const user = { uid: Date.now().toString(), email, displayName: name };
+        setCurrentUser(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        return { user };
     };
 
-    const login = (email, password) => {
-        return signInWithEmailAndPassword(auth, email, password);
+    const login = async (email, password) => {
+        // Mock Login - allow any email/password
+        // In a real local-only app, you might want to look up users, 
+        // but for this transition we just create a session.
+        // We can try to retrieve name if we stored it, else default.
+        const stored = localStorage.getItem('currentUser');
+        let user;
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.email === email) {
+                user = parsed;
+            }
+        }
+
+        if (!user) {
+            user = { uid: Date.now().toString(), email, displayName: email.split('@')[0] };
+        }
+
+        setCurrentUser(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        return { user };
     };
 
-    const googleSignIn = () => {
-        const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider);
+
+
+    const logout = async () => {
+        setCurrentUser(null);
+        localStorage.removeItem('currentUser');
     };
 
-    const logout = () => {
-        return signOut(auth);
+    const updateAuthProfile = async (profileData) => {
+        if (currentUser) {
+            const updated = { ...currentUser, ...profileData };
+            setCurrentUser(updated);
+            localStorage.setItem('currentUser', JSON.stringify(updated));
+        }
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setCurrentUser(user);
-            setLoading(false);
-
-            // Sync with localStorage for legacy components that might read it directly (optional but good for transition)
-            if (user) {
-                localStorage.setItem('currentUser', JSON.stringify({ name: user.displayName, email: user.email, uid: user.uid }));
-            } else {
-                localStorage.removeItem('currentUser');
-            }
-        });
-
-        return unsubscribe;
+        // Check local storage on load
+        const stored = localStorage.getItem('currentUser');
+        if (stored) {
+            setCurrentUser(JSON.parse(stored));
+        }
+        setLoading(false);
     }, []);
 
     const value = {
         currentUser,
         signup,
         login,
-        googleSignIn,
         logout,
-        loading
+        loading,
+        updateAuthProfile
     };
 
     return (

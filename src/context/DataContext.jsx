@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from '../config/firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
@@ -10,20 +8,11 @@ export const useData = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
     const { currentUser } = useAuth();
 
-    // Initial Data for Revenue Chart (Income vs Expense)
-    // Initial Data for Revenue Chart (Income vs Expense)
     const [revenueData, setRevenueData] = useState([]);
-
-    // Initial Data for Expense Pie Chart
     const [expenseData, setExpenseData] = useState([]);
-
-    // Initial Data for Trend Line Chart (Savings)
     const [trendData, setTrendData] = useState([]);
-
-    // Currency State
+    const [aggregatedData, setAggregatedData] = useState([]); // For DataList
     const [currency, setCurrency] = useState('$');
-
-    // Theme State
     const [theme, setTheme] = useState('dark');
 
     const themes = {
@@ -57,19 +46,99 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const updateCurrency = async (newCurrency) => {
+    // Helper to save to local storage
+    const saveSheetData = (newData) => {
+        localStorage.setItem('sheet_data', JSON.stringify(newData));
+        processData(newData);
+    };
+
+    const processData = (rawData) => {
+        // 1. Aggregate by Month
+        const tempMap = {};
+
+        rawData.forEach(item => {
+            // Normalize month: use 'month' field if present, otherwise 'name' or 'Unknown'
+            let monthRaw = (item.month || item.name || 'Unknown').trim();
+            // Capitalize first letter
+            if (monthRaw && monthRaw.length > 0) {
+                monthRaw = monthRaw.charAt(0).toUpperCase() + monthRaw.slice(1).toLowerCase();
+            }
+            const monthKey = monthRaw;
+
+            if (!tempMap[monthKey]) {
+                tempMap[monthKey] = {
+                    id: monthKey,
+                    month: monthKey,
+                    income: 0,
+                    expense: 0,
+                    savings: 0,
+                    lastUpdated: item.createdAt || ''
+                };
+            }
+
+            tempMap[monthKey].income += Number(item.income) || 0;
+            tempMap[monthKey].expense += Number(item.expense) || 0;
+            tempMap[monthKey].savings += Number(item.savings) || 0;
+
+            // Keep track of latest update
+            if (item.createdAt && (!tempMap[monthKey].lastUpdated || item.createdAt > tempMap[monthKey].lastUpdated)) {
+                tempMap[monthKey].lastUpdated = item.createdAt;
+            }
+        });
+
+        // Convert to array and sort by recency
+        const aggregatedList = Object.values(tempMap);
+        aggregatedList.sort((a, b) => {
+            // Sort by lastUpdated desc
+            if (a.lastUpdated > b.lastUpdated) return -1;
+            if (a.lastUpdated < b.lastUpdated) return 1;
+            return 0;
+        });
+
+        setAggregatedData(aggregatedList);
+
+        // 2. Prepare Revenue Data
+        const processedRevenue = aggregatedList.map(item => ({
+            name: item.month,
+            income: item.income,
+            expense: item.expense
+        }));
+        if (processedRevenue.length > 0) setRevenueData(processedRevenue);
+
+        // 3. Prepare Trend Data
+        const processedTrend = aggregatedList.map(item => ({
+            name: item.month,
+            savings: item.savings
+        }));
+        if (processedTrend.length > 0) setTrendData(processedTrend);
+
+        // 4. Process Expense Data (Group by Category)
+        const categoryMap = {};
+        rawData.forEach(item => {
+            if (item.category && item.expense) {
+                categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.expense);
+            } else if (item.category && item.value) {
+                categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.value);
+            }
+        });
+
+        const processedExpense = Object.keys(categoryMap).map(key => ({
+            name: key,
+            value: categoryMap[key]
+        }));
+        if (processedExpense.length > 0) setExpenseData(processedExpense);
+    };
+
+    const updateCurrency = (newCurrency) => {
         setCurrency(newCurrency);
         if (currentUser) {
-            try {
-                const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
-                await setDoc(userSettingsRef, { currency: newCurrency }, { merge: true });
-            } catch (error) {
-                console.error("Error updating currency:", error);
-            }
+            const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
+            settings.currency = newCurrency;
+            localStorage.setItem(`settings_${currentUser.uid}`, JSON.stringify(settings));
         }
     };
 
-    const updateTheme = async (newTheme) => {
+    const updateTheme = (newTheme) => {
         setTheme(newTheme);
         const themeColors = themes[newTheme];
         if (themeColors) {
@@ -78,126 +147,93 @@ export const DataProvider = ({ children }) => {
             });
         }
         if (currentUser) {
-            try {
-                const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
-                await setDoc(userSettingsRef, { theme: newTheme }, { merge: true });
-            } catch (error) {
-                console.error("Error updating theme:", error);
-            }
+            const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
+            settings.theme = newTheme;
+            localStorage.setItem(`settings_${currentUser.uid}`, JSON.stringify(settings));
         }
     };
 
     // Load User Settings
     useEffect(() => {
         if (!currentUser) return;
-
-        const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
-        const unsubscribe = onSnapshot(userSettingsRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.currency) setCurrency(data.currency);
-                if (data.theme) {
-                    setTheme(data.theme);
-                    // Apply theme immediately
-                    const themeColors = themes[data.theme];
-                    if (themeColors) {
-                        Object.entries(themeColors).forEach(([key, value]) => {
-                            document.documentElement.style.setProperty(key, value);
-                        });
-                    }
-                }
+        const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
+        if (settings.currency) setCurrency(settings.currency);
+        if (settings.theme) {
+            setTheme(settings.theme);
+            const themeColors = themes[settings.theme];
+            if (themeColors) {
+                Object.entries(themeColors).forEach(([key, value]) => {
+                    document.documentElement.style.setProperty(key, value);
+                });
             }
-        });
-
-        return () => unsubscribe();
+        }
     }, [currentUser]);
 
-    // Initial Data loading from Firebase
+    // Initial Data loading from LocalStorage
     useEffect(() => {
-        const unsubscribe = onSnapshot(collection(db, 'sheet_data'), (snapshot) => {
-            const rawData = snapshot.docs.map(doc => doc.data());
-
-            // Process Revenue Data (Group by Month or existing 'name' field)
-            // Assumption: Data has 'month' or 'name', 'income', 'expense' fields
-            const processedRevenue = rawData.map(item => ({
-                name: item.month || item.name || 'Unknown',
-                income: Number(item.income) || 0,
-                expense: Number(item.expense) || 0
-            }));
-            // Check if we actually have valid revenue data, else keep empty or default
-            if (processedRevenue.length > 0) setRevenueData(processedRevenue);
-
-            // Process Trend Data (Savings)
-            const processedTrend = rawData.map(item => ({
-                name: item.month || item.name || 'Unknown',
-                savings: Number(item.savings) || 0
-            }));
-            if (processedTrend.length > 0) setTrendData(processedTrend);
-
-            // Process Expense Data (Group by Category)
-            // Assumption: Data has 'category', 'value' or derived from 'expense' + 'category'
-            const categoryMap = {};
-            rawData.forEach(item => {
-                if (item.category && item.expense) {
-                    categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.expense);
-                } else if (item.category && item.value) {
-                    // Fallback for direct Pie Chart data format
-                    categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.value);
-                }
-            });
-
-            const processedExpense = Object.keys(categoryMap).map(key => ({
-                name: key,
-                value: categoryMap[key]
-            }));
-            if (processedExpense.length > 0) setExpenseData(processedExpense);
-
-        });
-
-        return () => unsubscribe();
+        refreshData();
     }, []);
 
-    const addRevenueData = async (month, income, expense) => {
-        try {
-            await addDoc(collection(db, 'sheet_data'), {
-                month: month, // Using 'month' to match my reading logic
-                income: Number(income),
-                expense: Number(expense),
-                createdAt: serverTimestamp()
-            });
-        } catch (error) {
-            console.error("Error adding revenue document: ", error);
+    // Function to force refresh data
+    const refreshData = () => {
+        const storedData = localStorage.getItem('sheet_data');
+        if (storedData) {
+            processData(JSON.parse(storedData));
+        } else {
+            setAggregatedData([]);
+            setRevenueData([]);
+            setExpenseData([]);
+            setTrendData([]);
         }
+    };
+
+    const addRevenueData = async (month, income, expense) => {
+        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
+        const newItem = {
+            month,
+            income: Number(income),
+            expense: Number(expense),
+            createdAt: new Date().toISOString()
+        };
+        const newData = [...stored, newItem];
+        saveSheetData(newData);
     };
 
     const addExpenseData = async (month, description, value) => {
-        try {
-            // Use provided month or default to current month (short format)
-            const monthToSave = month && month.trim() !== ''
-                ? month
-                : new Date().toLocaleString('default', { month: 'short' });
+        const monthToSave = month && month.trim() !== ''
+            ? month
+            : new Date().toLocaleString('default', { month: 'short' });
 
-            await addDoc(collection(db, 'sheet_data'), {
-                month: monthToSave,
-                category: description, // Save description as category for record keeping
-                expense: Number(value),
-                createdAt: serverTimestamp()
-            });
-        } catch (error) {
-            console.error("Error adding expense document: ", error);
-        }
+        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
+        const newItem = {
+            month: monthToSave,
+            category: description,
+            expense: Number(value),
+            createdAt: new Date().toISOString()
+        };
+        const newData = [...stored, newItem];
+        saveSheetData(newData);
     };
 
     const addTrendData = async (month, savings) => {
-        try {
-            await addDoc(collection(db, 'sheet_data'), {
-                month: month,
-                savings: Number(savings),
-                createdAt: serverTimestamp()
-            });
-        } catch (error) {
-            console.error("Error adding savings document: ", error);
-        }
+        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
+        const newItem = {
+            month,
+            savings: Number(savings),
+            createdAt: new Date().toISOString()
+        };
+        const newData = [...stored, newItem];
+        saveSheetData(newData);
+    };
+
+    const importData = (newItems) => {
+        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
+        const itemsWithTimestamp = newItems.map(item => ({
+            ...item,
+            createdAt: new Date().toISOString()
+        }));
+        const newData = [...stored, ...itemsWithTimestamp];
+        saveSheetData(newData);
     };
 
     return (
@@ -205,13 +241,16 @@ export const DataProvider = ({ children }) => {
             revenueData,
             expenseData,
             trendData,
+            aggregatedData,
             addRevenueData,
             addExpenseData,
             addTrendData,
+            importData,
             currency,
             updateCurrency,
             theme,
-            updateTheme
+            updateTheme,
+            refreshData
         }}>
             {children}
         </DataContext.Provider>

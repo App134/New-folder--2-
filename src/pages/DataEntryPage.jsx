@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import './DataEntryPage.css';
 import Footer from '../components/layout/Footer';
+import BackButton from '../components/common/BackButton';
 
 const DataEntryPage = () => {
     const { addRevenueData, addExpenseData, addTrendData } = useData();
@@ -53,6 +54,7 @@ const DataEntryPage = () => {
 
     return (
         <div className="data-entry-container">
+            <BackButton />
             <div className="data-entry-header">
                 <h1>Financial Data Entry</h1>
                 <p>Manage your expenses, revenue, and savings in one place.</p>

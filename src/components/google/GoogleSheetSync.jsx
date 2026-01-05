@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { db } from '../../config/firebase'; // Adjust path if needed
-import { collection, addDoc, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
-import { Database, CloudUpload, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
+import { useData } from '../../context/DataContext';
+import { Database, CloudUpload, RefreshCw, ExternalLink } from 'lucide-react';
 
 const GoogleSheetSync = ({ onDataSynced }) => {
     const [sheetUrl, setSheetUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', msg: '' });
+
+    // Use importData from context instead of direct Firestore calls
+    const { importData } = useData();
 
     const handleSync = async () => {
         if (!sheetUrl) {
@@ -24,54 +26,30 @@ const GoogleSheetSync = ({ onDataSynced }) => {
             const text = await response.text();
 
             // 2. Parse CSV
-            console.log("Raw CSV Text:", text); // Debugging
-
-            // Handle different line endings (CRLF vs LF)
             const rows = text.split(/\r?\n/);
-
             if (rows.length === 0) throw new Error('CSV is empty');
 
             const headers = rows[0].split(',').map(h => h.trim());
-            console.log("Headers:", headers); // Debugging
-
             const data = rows.slice(1)
                 .map(rowStr => rowStr.split(','))
-                .filter(row => row.length === headers.length && row.some(cell => cell.trim() !== "")) // Filter empty rows or mismatched columns
+                .filter(row => row.length === headers.length && row.some(cell => cell.trim() !== ""))
                 .map(row => {
                     const obj = {};
                     headers.forEach((header, i) => {
-                        // Try to parse number if possible
                         const val = row[i]?.trim();
                         obj[header] = (val !== "" && !isNaN(Number(val))) ? Number(val) : val;
                     });
                     return obj;
                 });
 
-            console.log("Parsed Data:", data); // Debugging
-
             if (data.length === 0) throw new Error('No valid data found in the sheet. Check if headers match the data rows.');
 
-            setStatus({ type: 'info', msg: `Found ${data.length} records. Syncing to Firestore...` });
+            setStatus({ type: 'info', msg: `Found ${data.length} records. Syncing to Database...` });
 
-            // 3. Clear existing Firestore Collection (Optional: or append)
-            // For this demo, we'll replace "sheet_data" collection content or just add to it.
-            // Let's use a batch write to add new documents.
-            const batch = writeBatch(db);
-            const collectionRef = collection(db, 'sheet_data');
+            // 3. Save to Local Storage via Context
+            importData(data);
 
-            // Optional: Delete old data first? 
-            // setStatus({ type: 'info', msg: 'Clearing old data...' });
-            // const q = await getDocs(collectionRef);
-            // q.forEach((doc) => batch.delete(doc.ref));
-
-            data.forEach((item) => {
-                const docRef = doc(collectionRef); // Generate new ID
-                batch.set(docRef, { ...item, syncedAt: new Date() });
-            });
-
-            await batch.commit();
-
-            setStatus({ type: 'success', msg: `Successfully synced ${data.length} records to Firestore!` });
+            setStatus({ type: 'success', msg: `Successfully synced ${data.length} records!` });
             if (onDataSynced) onDataSynced(data, headers);
 
         } catch (error) {
@@ -92,7 +70,7 @@ const GoogleSheetSync = ({ onDataSynced }) => {
             </div>
 
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                Connect a Google Sheet to sync data directly to your Firestore database.
+                Connect a Google Sheet to sync data directly to your database.
                 <br />
                 <a
                     href="https://support.google.com/docs/answer/183965?hl=en&co=GENIE.Platform%3DDesktop"

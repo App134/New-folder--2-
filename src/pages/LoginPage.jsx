@@ -9,7 +9,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, googleSignIn } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -28,19 +28,7 @@ const LoginPage = () => {
         }
     };
 
-    const handleGoogleSignIn = async () => {
-        try {
-            setError('');
-            setLoading(true);
-            await googleSignIn();
-            navigate('/');
-        } catch (err) {
-            console.error(err);
-            setError('Failed to sign in with Google: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
-    }
+
 
     return (
         <div className="auth-container" style={{ flexDirection: 'column', gap: '2rem' }}>
@@ -79,15 +67,6 @@ const LoginPage = () => {
 
                     <button type="submit" className="auth-button" disabled={loading}>
                         {loading ? 'Signing In...' : 'Sign In'}
-                    </button>
-
-                    <div className="auth-divider">
-                        <span>OR</span>
-                    </div>
-
-                    <button type="button" className="google-button" onClick={handleGoogleSignIn} disabled={loading}>
-                        <img src="https://www.google.com/favicon.ico" alt="Google" />
-                        Continue with Google
                     </button>
                 </form>
 
