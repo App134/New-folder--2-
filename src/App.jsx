@@ -12,8 +12,8 @@ import { AuthProvider } from './context/AuthContext';
 function App() {
   return (
     <Router>
-      <DataProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <DataProvider>
           <div className="app-container">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
@@ -46,8 +46,8 @@ function App() {
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </div>
-        </AuthProvider>
-      </DataProvider>
+        </DataProvider>
+      </AuthProvider>
     </Router>
   );
 }

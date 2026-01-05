@@ -1,16 +1,21 @@
 import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 import './Header.css';
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
     // Get user from Auth Context
     const { currentUser } = useAuth();
     const userName = currentUser?.displayName || currentUser?.email || 'User';
 
     return (
         <header className="header">
+            {/* Mobile Menu Button - Hidden on desktop via CSS */}
+            <button className="menu-btn icon-btn" onClick={onMenuClick}>
+                <Menu size={24} />
+            </button>
+
             <div className="search-bar">
                 <Search size={20} className="search-icon" />
                 <input type="text" placeholder="Search transactions..." />

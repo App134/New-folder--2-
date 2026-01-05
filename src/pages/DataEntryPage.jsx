@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import './Auth.css'; // Reusing auth styles for form consistency
+import './DataEntryPage.css';
+import Footer from '../components/layout/Footer';
 
 const DataEntryPage = () => {
     const { addRevenueData, addExpenseData, addTrendData } = useData();
+    const [activeTab, setActiveTab] = useState('expense');
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Expense Form State
     const [expenseDescription, setExpenseDescription] = useState('');
@@ -18,23 +21,26 @@ const DataEntryPage = () => {
     const [savingsMonth, setSavingsMonth] = useState('');
     const [savingsAmount, setSavingsAmount] = useState('');
 
+    const showSuccess = (msg) => {
+        setSuccessMessage(msg);
+        setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
     const handleExpenseSubmit = (e) => {
         e.preventDefault();
-        // Pass month AND description
         addExpenseData(expenseMonth, expenseDescription, expenseAmount);
         setExpenseDescription('');
         setExpenseMonth('');
         setExpenseAmount('');
-        alert('Expense added!');
+        showSuccess('Expense successfully added!');
     };
 
     const handleRevenueSubmit = (e) => {
         e.preventDefault();
-        // Pass 0 for expense since we removed the field
         addRevenueData(revenueMonth, revenueIncome, 0);
         setRevenueMonth('');
         setRevenueIncome('');
-        alert('Revenue data added!');
+        showSuccess('Revenue successfully added!');
     };
 
     const handleSavingsSubmit = (e) => {
@@ -42,31 +48,57 @@ const DataEntryPage = () => {
         addTrendData(savingsMonth, savingsAmount);
         setSavingsMonth('');
         setSavingsAmount('');
-        alert('Savings data added!');
+        showSuccess('Savings successfully added!');
     };
 
     return (
-        <div className="auth-container" style={{ flexDirection: 'column', gap: '2rem', padding: '2rem' }}>
-            <h1 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Data Entry</h1>
+        <div className="data-entry-container">
+            <div className="data-entry-header">
+                <h1>Financial Data Entry</h1>
+                <p>Manage your expenses, revenue, and savings in one place.</p>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', width: '100%', maxWidth: '1200px' }}>
-                {/* Expense Form */}
-                <div className="auth-card">
-                    <div className="auth-header">
-                        <h2>Add Expense</h2>
-                    </div>
-                    <form className="auth-form" onSubmit={handleExpenseSubmit}>
-                        <div className="form-group">
+            <div className="tabs-container">
+                <button
+                    className={`tab-button ${activeTab === 'expense' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('expense')}
+                >
+                    Add Expense
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'revenue' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('revenue')}
+                >
+                    Add Revenue
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'savings' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('savings')}
+                >
+                    Add Savings
+                </button>
+            </div>
+
+            {/* Expense Form */}
+            {activeTab === 'expense' && (
+                <div className="form-card">
+                    <div className="form-title">💸 New Expense</div>
+                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    <form className="form-content" onSubmit={handleExpenseSubmit}>
+                        <div className="input-group">
                             <label>Description</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Groceries"
-                                value={expenseDescription}
-                                onChange={(e) => setExpenseDescription(e.target.value)}
-                                required
-                            />
+                            <div className="input-wrapper">
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Groceries, Rent, Utilities"
+                                    value={expenseDescription}
+                                    onChange={(e) => setExpenseDescription(e.target.value)}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
                         </div>
-                        <div className="form-group">
+                        <div className="input-group">
                             <label>Month (Optional)</label>
                             <input
                                 type="text"
@@ -75,27 +107,28 @@ const DataEntryPage = () => {
                                 onChange={(e) => setExpenseMonth(e.target.value)}
                             />
                         </div>
-                        <div className="form-group">
+                        <div className="input-group">
                             <label>Amount</label>
                             <input
                                 type="number"
-                                placeholder="e.g. 100"
+                                placeholder="0.00"
                                 value={expenseAmount}
                                 onChange={(e) => setExpenseAmount(e.target.value)}
                                 required
                             />
                         </div>
-                        <button type="submit" className="auth-button">Add Expense</button>
+                        <button type="submit" className="submit-btn">Add Expense</button>
                     </form>
                 </div>
+            )}
 
-                {/* Revenue Form */}
-                <div className="auth-card">
-                    <div className="auth-header">
-                        <h2>Add Revenue</h2>
-                    </div>
-                    <form className="auth-form" onSubmit={handleRevenueSubmit}>
-                        <div className="form-group">
+            {/* Revenue Form */}
+            {activeTab === 'revenue' && (
+                <div className="form-card">
+                    <div className="form-title">💰 Record Revenue</div>
+                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    <form className="form-content" onSubmit={handleRevenueSubmit}>
+                        <div className="input-group">
                             <label>Month</label>
                             <input
                                 type="text"
@@ -103,29 +136,33 @@ const DataEntryPage = () => {
                                 value={revenueMonth}
                                 onChange={(e) => setRevenueMonth(e.target.value)}
                                 required
+                                autoFocus
                             />
                         </div>
-                        <div className="form-group">
-                            <label>Income</label>
+                        <div className="input-group">
+                            <label>Income Amount</label>
                             <input
                                 type="number"
-                                placeholder="e.g. 5000"
+                                placeholder="0.00"
                                 value={revenueIncome}
                                 onChange={(e) => setRevenueIncome(e.target.value)}
                                 required
                             />
                         </div>
-                        <button type="submit" className="auth-button">Add Revenue</button>
+                        <button type="submit" className="submit-btn" style={{ background: 'linear-gradient(135deg, var(--accent-secondary), #059669)' }}>
+                            Add Revenue
+                        </button>
                     </form>
                 </div>
+            )}
 
-                {/* Savings Form */}
-                <div className="auth-card">
-                    <div className="auth-header">
-                        <h2>Add Savings</h2>
-                    </div>
-                    <form className="auth-form" onSubmit={handleSavingsSubmit}>
-                        <div className="form-group">
+            {/* Savings Form */}
+            {activeTab === 'savings' && (
+                <div className="form-card">
+                    <div className="form-title">🏦 Update Savings</div>
+                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    <form className="form-content" onSubmit={handleSavingsSubmit}>
+                        <div className="input-group">
                             <label>Month</label>
                             <input
                                 type="text"
@@ -133,21 +170,27 @@ const DataEntryPage = () => {
                                 value={savingsMonth}
                                 onChange={(e) => setSavingsMonth(e.target.value)}
                                 required
+                                autoFocus
                             />
                         </div>
-                        <div className="form-group">
-                            <label>Savings Amount</label>
+                        <div className="input-group">
+                            <label>Total Savings</label>
                             <input
                                 type="number"
-                                placeholder="e.g. 2000"
+                                placeholder="0.00"
                                 value={savingsAmount}
                                 onChange={(e) => setSavingsAmount(e.target.value)}
                                 required
                             />
                         </div>
-                        <button type="submit" className="auth-button">Add Savings</button>
+                        <button type="submit" className="submit-btn" style={{ background: 'linear-gradient(135deg, var(--accent-tertiary), #7c3aed)' }}>
+                            Add Savings
+                        </button>
                     </form>
                 </div>
+            )}
+            <div style={{ marginTop: 'auto', width: '100%' }}>
+                <Footer />
             </div>
         </div>
     );

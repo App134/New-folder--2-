@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
+import Footer from '../components/layout/Footer';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -42,8 +43,8 @@ const LoginPage = () => {
     }
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
+        <div className="auth-container" style={{ flexDirection: 'column', gap: '2rem' }}>
+            <div className="auth-card" style={{ flex: 0 }}>
                 <div className="auth-header">
                     <h2>Welcome Back</h2>
                     <p>Please enter your details to sign in</p>
@@ -99,6 +100,7 @@ const LoginPage = () => {
                     </p>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };

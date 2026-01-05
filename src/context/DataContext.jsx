@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
 
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
+    const { currentUser } = useAuth();
+
     // Initial Data for Revenue Chart (Income vs Expense)
     // Initial Data for Revenue Chart (Income vs Expense)
     const [revenueData, setRevenueData] = useState([]);
@@ -54,11 +57,19 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const updateCurrency = (newCurrency) => {
+    const updateCurrency = async (newCurrency) => {
         setCurrency(newCurrency);
+        if (currentUser) {
+            try {
+                const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(userSettingsRef, { currency: newCurrency }, { merge: true });
+            } catch (error) {
+                console.error("Error updating currency:", error);
+            }
+        }
     };
 
-    const updateTheme = (newTheme) => {
+    const updateTheme = async (newTheme) => {
         setTheme(newTheme);
         const themeColors = themes[newTheme];
         if (themeColors) {
@@ -66,7 +77,40 @@ export const DataProvider = ({ children }) => {
                 document.documentElement.style.setProperty(key, value);
             });
         }
+        if (currentUser) {
+            try {
+                const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(userSettingsRef, { theme: newTheme }, { merge: true });
+            } catch (error) {
+                console.error("Error updating theme:", error);
+            }
+        }
     };
+
+    // Load User Settings
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const userSettingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+        const unsubscribe = onSnapshot(userSettingsRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.currency) setCurrency(data.currency);
+                if (data.theme) {
+                    setTheme(data.theme);
+                    // Apply theme immediately
+                    const themeColors = themes[data.theme];
+                    if (themeColors) {
+                        Object.entries(themeColors).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
 
     // Initial Data loading from Firebase
     useEffect(() => {

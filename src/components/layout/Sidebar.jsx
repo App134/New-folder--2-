@@ -5,7 +5,9 @@ import './Sidebar.css';
 
 import { useAuth } from '../../context/AuthContext';
 
-const Sidebar = () => {
+import logo from '../../assets/logo.png';
+
+const Sidebar = ({ isOpen, onClose }) => {
     // Get user from Auth Context
     const { currentUser, logout } = useAuth();
     const userName = currentUser?.displayName || currentUser?.email || 'User';
@@ -13,17 +15,22 @@ const Sidebar = () => {
     const handleLogout = async () => {
         try {
             await logout();
-            // Redirect is handled by ProtectedRoute/AuthContext state change
         } catch (error) {
             console.error("Failed to log out", error);
         }
     };
 
+    const handleNavClick = () => {
+        if (window.innerWidth <= 768 && onClose) {
+            onClose();
+        }
+    };
+
     return (
-        <aside className="sidebar">
+        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
-                <div className="logo-icon">
-                    <Wallet size={28} color="white" />
+                <div className="logo-container">
+                    <img src={logo} alt="FinanceFlow Logo" className="sidebar-logo" />
                 </div>
                 <h1 className="logo-text">FinanceFlow</h1>
             </div>
@@ -31,20 +38,20 @@ const Sidebar = () => {
             <nav className="sidebar-nav">
                 <ul>
                     <li className="nav-item">
-                        <Link to="/">
+                        <Link to="/" onClick={handleNavClick}>
                             <LayoutDashboard size={20} />
                             <span>Dashboard</span>
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link to="/data-entry">
+                        <Link to="/data-entry" onClick={handleNavClick}>
                             <PlusCircle size={20} />
                             <span>Data Entry</span>
                         </Link>
                     </li>
 
                     <li className="nav-item">
-                        <Link to="/user">
+                        <Link to="/user" onClick={handleNavClick}>
                             <Settings size={20} />
                             <span>Settings</span>
                         </Link>
