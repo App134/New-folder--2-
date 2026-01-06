@@ -3,6 +3,7 @@ import { Search, Bell, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 import './Header.css';
+import logo from '../../assets/logo.png';
 
 const Header = ({ onMenuClick }) => {
     // Get user from Auth Context
@@ -12,9 +13,16 @@ const Header = ({ onMenuClick }) => {
     return (
         <header className="header">
             {/* Mobile Menu Button - Hidden on desktop via CSS */}
-            <button className="menu-btn icon-btn" onClick={onMenuClick}>
-                <Menu size={24} />
-            </button>
+            {/* Mobile Menu Button - Hidden on desktop via CSS */}
+            <div className="mobile-header-left">
+                <button className="menu-btn icon-btn" onClick={onMenuClick}>
+                    <Menu size={24} />
+                </button>
+                <div className="mobile-logo-container">
+                    <img src={logo} alt="FinanceFlow" className="mobile-logo" />
+                    <span className="mobile-logo-text">FinanceFlow</span>
+                </div>
+            </div>
 
             <div className="search-bar">
                 <Search size={20} className="search-icon" />

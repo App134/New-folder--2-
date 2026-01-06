@@ -146,4 +146,33 @@
     .header-actions {
         gap: 0.75rem;
     }
+
+    .mobile-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mobile-logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mobile-logo {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+
+    .mobile-logo-text {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+    }
+}
+
+.mobile-logo-container {
+    display: none;
 }
