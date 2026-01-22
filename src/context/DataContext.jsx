@@ -1,5 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { db } from '../firebase';
+import {
+    collection,
+    query,
+    onSnapshot,
+    addDoc,
+    doc,
+    setDoc,
+    orderBy,
+    serverTimestamp
+} from 'firebase/firestore';
 
 const DataContext = createContext();
 
@@ -44,12 +55,6 @@ export const DataProvider = ({ children }) => {
             '--text-primary': '#f0f9ff',
             '--text-secondary': '#bae6fd'
         }
-    };
-
-    // Helper to save to local storage
-    const saveSheetData = (newData) => {
-        localStorage.setItem('sheet_data', JSON.stringify(newData));
-        processData(newData);
     };
 
     const processData = (rawData) => {
@@ -129,16 +134,7 @@ export const DataProvider = ({ children }) => {
         if (processedExpense.length > 0) setExpenseData(processedExpense);
     };
 
-    const updateCurrency = (newCurrency) => {
-        setCurrency(newCurrency);
-        if (currentUser) {
-            const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
-            settings.currency = newCurrency;
-            localStorage.setItem(`settings_${currentUser.uid}`, JSON.stringify(settings));
-        }
-    };
-
-    const updateTheme = (newTheme) => {
+    const updateTheme = async (newTheme) => {
         setTheme(newTheme);
         const themeColors = themes[newTheme];
         if (themeColors) {
@@ -147,93 +143,142 @@ export const DataProvider = ({ children }) => {
             });
         }
         if (currentUser) {
-            const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
-            settings.theme = newTheme;
-            localStorage.setItem(`settings_${currentUser.uid}`, JSON.stringify(settings));
+            try {
+                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(settingsRef, { theme: newTheme }, { merge: true });
+            } catch (err) {
+                console.error("Error updating theme:", err);
+            }
+        }
+    };
+
+    const updateCurrency = async (newCurrency) => {
+        setCurrency(newCurrency);
+        if (currentUser) {
+            try {
+                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(settingsRef, { currency: newCurrency }, { merge: true });
+            } catch (err) {
+                console.error("Error updating currency:", err);
+            }
         }
     };
 
     // Load User Settings
     useEffect(() => {
         if (!currentUser) return;
-        const settings = JSON.parse(localStorage.getItem(`settings_${currentUser.uid}`) || '{}');
-        if (settings.currency) setCurrency(settings.currency);
-        if (settings.theme) {
-            setTheme(settings.theme);
-            const themeColors = themes[settings.theme];
-            if (themeColors) {
-                Object.entries(themeColors).forEach(([key, value]) => {
-                    document.documentElement.style.setProperty(key, value);
-                });
+
+        const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+        const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.theme) {
+                    setTheme(data.theme);
+                    const themeColors = themes[data.theme];
+                    if (themeColors) {
+                        Object.entries(themeColors).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                }
+                if (data.currency) setCurrency(data.currency);
             }
-        }
+        });
+
+        return () => unsubscribe();
     }, [currentUser]);
 
-    // Initial Data loading from LocalStorage
+    // Real-time Data Listener
     useEffect(() => {
-        refreshData();
-    }, []);
-
-    // Function to force refresh data
-    const refreshData = () => {
-        const storedData = localStorage.getItem('sheet_data');
-        if (storedData) {
-            processData(JSON.parse(storedData));
-        } else {
+        if (!currentUser) {
+            // Reset data if no user
             setAggregatedData([]);
             setRevenueData([]);
             setExpenseData([]);
             setTrendData([]);
+            return;
         }
+
+        const dataRef = collection(db, 'users', currentUser.uid, 'financial_data');
+        const q = query(dataRef, orderBy('createdAt', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            processData(fetchedData);
+        }, (error) => {
+            console.error("Error fetching data:", error);
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
+
+    // Placeholder for manual refresh (Firestore is real-time, but keeping API compatible)
+    const refreshData = () => {
+        // No-op for Firestore listener
     };
 
     const addRevenueData = async (month, income, expense) => {
-        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
-        const newItem = {
-            month,
-            income: Number(income),
-            expense: Number(expense),
-            createdAt: new Date().toISOString()
-        };
-        const newData = [...stored, newItem];
-        saveSheetData(newData);
+        if (!currentUser) return;
+        try {
+            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+                month,
+                income: Number(income),
+                expense: Number(expense),
+                createdAt: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error("Error adding revenue:", err);
+            throw err;
+        }
     };
 
     const addExpenseData = async (month, description, value) => {
+        if (!currentUser) return;
         const monthToSave = month && month.trim() !== ''
             ? month
             : new Date().toLocaleString('default', { month: 'short' });
 
-        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
-        const newItem = {
-            month: monthToSave,
-            category: description,
-            expense: Number(value),
-            createdAt: new Date().toISOString()
-        };
-        const newData = [...stored, newItem];
-        saveSheetData(newData);
+        try {
+            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+                month: monthToSave,
+                category: description,
+                expense: Number(value),
+                createdAt: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error("Error adding expense:", err);
+            throw err;
+        }
     };
 
     const addTrendData = async (month, savings) => {
-        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
-        const newItem = {
-            month,
-            savings: Number(savings),
-            createdAt: new Date().toISOString()
-        };
-        const newData = [...stored, newItem];
-        saveSheetData(newData);
+        if (!currentUser) return;
+        try {
+            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+                month,
+                savings: Number(savings),
+                createdAt: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error("Error adding trend data:", err);
+            throw err;
+        }
     };
 
-    const importData = (newItems) => {
-        const stored = JSON.parse(localStorage.getItem('sheet_data') || '[]');
-        const itemsWithTimestamp = newItems.map(item => ({
-            ...item,
-            createdAt: new Date().toISOString()
-        }));
-        const newData = [...stored, ...itemsWithTimestamp];
-        saveSheetData(newData);
+    const importData = async (newItems) => {
+        if (!currentUser) return;
+        // Batch writes would be better for many items, but keeping it simple for now
+        const promises = newItems.map(item => {
+            return addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+                ...item,
+                createdAt: new Date().toISOString()
+            });
+        });
+
+        await Promise.all(promises);
     };
 
     return (
