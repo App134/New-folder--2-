@@ -1,15 +1,37 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import SummaryCard from '../components/dashboard/SummaryCard';
 import RevenueChart from '../components/dashboard/RevenueChart';
 import ExpensePieChart from '../components/dashboard/ExpensePieChart';
 import TrendLineChart from '../components/dashboard/TrendLineChart';
 import GoogleSheetSync from '../components/google/GoogleSheetSync';
 import DataList from '../components/dashboard/DataList';
-import ExcelChart from '../components/excel/ExcelChart'; // Keeping ExcelChart for visualization for now
-import { useState, useMemo } from 'react';
-import { DollarSign, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import ExcelChart from '../components/excel/ExcelChart';
+import { DollarSign, CreditCard, PiggyBank } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import './Dashboard.css';
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.5,
+            ease: "easeOut"
+        }
+    }
+};
 
 const Dashboard = () => {
     const { revenueData, trendData, currency } = useData();
@@ -26,13 +48,18 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="dashboard-container">
-            <div className="welcome-section">
+        <motion.div
+            className="dashboard-container"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            <motion.div className="welcome-section" variants={itemVariants}>
                 <h2>Dashboard</h2>
                 <p>Overview of your financial status.</p>
-            </div>
+            </motion.div>
 
-            <div className="stats-grid">
+            <motion.div className="stats-grid" variants={itemVariants}>
                 <SummaryCard
                     title="Total Income"
                     amount={`${currency}${totalIncome.toLocaleString()}`}
@@ -57,23 +84,23 @@ const Dashboard = () => {
                     icon={PiggyBank}
                     color="green"
                 />
-            </div>
+            </motion.div>
 
             <div className="charts-grid">
-                <div className="chart-card large">
+                <motion.div className="chart-card large" variants={itemVariants}>
                     <h3>Revenue Overview</h3>
                     <RevenueChart />
-                </div>
-                <div className="chart-card medium">
+                </motion.div>
+                <motion.div className="chart-card medium" variants={itemVariants}>
                     <h3>Expense Breakdown</h3>
                     <ExpensePieChart />
-                </div>
-                <div className="chart-card full-width">
+                </motion.div>
+                <motion.div className="chart-card full-width" variants={itemVariants}>
                     <h3>Financial Growth Trend</h3>
                     <TrendLineChart />
-                </div>
+                </motion.div>
 
-                <div className="chart-card full-width">
+                <motion.div className="chart-card full-width" variants={itemVariants}>
                     <h3>Google Sheets Integration</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                         Sync data from Google Sheets directly to your local database.
@@ -92,9 +119,9 @@ const Dashboard = () => {
                             <ExcelChart data={excelData} headers={excelHeaders} />
                         </div>
                     )}
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

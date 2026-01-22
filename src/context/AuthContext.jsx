@@ -9,34 +9,75 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const signup = async (email, password, name) => {
-        // Mock Signup
-        const user = { uid: Date.now().toString(), email, displayName: name };
-        setCurrentUser(user);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return { user };
+        // Get existing users
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+
+        // Check if email already exists
+        if (existingUsers.some(user => user.email === email)) {
+            throw new Error('Email already already in use');
+        }
+
+        const newUser = {
+            uid: Date.now().toString(),
+            email,
+            password, // In a real app, this should be hashed
+            displayName: name
+        };
+
+        const updatedUsers = [...existingUsers, newUser];
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+        // Set current user session
+        // Don't store password in session
+        const { password: _, ...userSession } = newUser;
+        setCurrentUser(userSession);
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+
+        return { user: userSession };
     };
 
     const login = async (email, password) => {
-        // Mock Login - allow any email/password
-        // In a real local-only app, you might want to look up users, 
-        // but for this transition we just create a session.
-        // We can try to retrieve name if we stored it, else default.
-        const stored = localStorage.getItem('currentUser');
-        let user;
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.email === email) {
-                user = parsed;
-            }
-        }
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = existingUsers.find(u => u.email === email && u.password === password);
 
         if (!user) {
-            user = { uid: Date.now().toString(), email, displayName: email.split('@')[0] };
+            throw new Error('Invalid email or password');
         }
 
-        setCurrentUser(user);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return { user };
+        // Create session without password
+        const { password: _, ...userSession } = user;
+        setCurrentUser(userSession);
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+        return { user: userSession };
+    };
+
+    const loginWithGoogle = async () => {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const googleEmail = 'user@gmail.com'; // Mock Google email
+
+        let user = existingUsers.find(u => u.email === googleEmail);
+
+        if (!user) {
+            // Create mock Google user if not exists
+            user = {
+                uid: 'google_' + Date.now(),
+                email: googleEmail,
+                password: 'google_oauth_mock_password', // Internal use only
+                displayName: 'Google User',
+                photoURL: 'https://lh3.googleusercontent.com/a/default-user=s96-c' // Generic avatar
+            };
+            const updatedUsers = [...existingUsers, user];
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
+        }
+
+        // Create session
+        const { password: _, ...userSession } = user;
+        setCurrentUser(userSession);
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+        return { user: userSession };
     };
 
 
@@ -67,6 +108,7 @@ export const AuthProvider = ({ children }) => {
         currentUser,
         signup,
         login,
+        loginWithGoogle,
         logout,
         loading,
         updateAuthProfile

@@ -1,8 +1,26 @@
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import React, { useMemo } from 'react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
-const ExcelChart = ({ data, headers }) => {
-    if (!data || data.length === 0 || headers.length < 2) {
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
+
+const ExcelChart = ({ data: excelData, headers }) => {
+    if (!excelData || excelData.length === 0 || headers.length < 2) {
         return null;
     }
 
@@ -10,29 +28,67 @@ const ExcelChart = ({ data, headers }) => {
     const xKey = headers[0];
     const barKey = headers[1];
 
+    // Memoize chart config
+    const chartData = useMemo(() => {
+        return {
+            labels: excelData.map(item => item[xKey]),
+            datasets: [
+                {
+                    label: barKey,
+                    data: excelData.map(item => item[barKey]),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4,
+                },
+            ],
+        };
+    }, [excelData, xKey, barKey]);
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                titleColor: '#f8fafc',
+                bodyColor: '#f8fafc',
+                borderColor: '#334155',
+                borderWidth: 1,
+            },
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false,
+                },
+                ticks: {
+                    color: '#94a3b8',
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(51, 65, 85, 0.5)',
+                    drawBorder: false,
+                },
+                ticks: {
+                    color: '#94a3b8',
+                },
+                border: {
+                    display: false
+                }
+            },
+        },
+    };
+
     return (
         <div style={{ width: '100%', height: 300, marginTop: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Preview: {barKey} by {xKey}</h3>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                    data={data}
-                    margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} vertical={false} />
-                    <XAxis dataKey={xKey} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                    <YAxis stroke="#94a3b8" axisLine={false} tickLine={false} />
-                    <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                        itemStyle={{ color: '#f8fafc' }}
-                    />
-                    <Bar dataKey={barKey} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
+            <Bar data={chartData} options={options} />
         </div>
     );
 };

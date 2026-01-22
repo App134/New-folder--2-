@@ -1,33 +1,91 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import { useData } from '../../context/DataContext';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const RevenueChart = () => {
     const { revenueData } = useData();
 
+    const data = {
+        labels: revenueData.map(item => item.name),
+        datasets: [
+            {
+                label: 'Income',
+                data: revenueData.map(item => item.income),
+                backgroundColor: '#3b82f6',
+                borderRadius: 4,
+            },
+            {
+                label: 'Expense',
+                data: revenueData.map(item => item.expense),
+                backgroundColor: '#ef4444',
+                borderRadius: 4,
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false, // Recharts version didn't have a visible legend in the snippet, but let's check if we want it. The snippet didn't show <Legend />.
+            },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                titleColor: '#f8fafc',
+                bodyColor: '#f8fafc',
+                borderColor: '#334155',
+                borderWidth: 1,
+            },
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false,
+                },
+                ticks: {
+                    color: '#94a3b8',
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(51, 65, 85, 0.5)',
+                    drawBorder: false,
+                },
+                ticks: {
+                    color: '#94a3b8',
+                },
+                border: {
+                    display: false
+                }
+            },
+        },
+    };
+
     return (
         <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                    data={revenueData}
-                    margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" axisLine={false} tickLine={false} />
-                    <YAxis stroke="#94a3b8" axisLine={false} tickLine={false} />
-                    <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                        itemStyle={{ color: '#f8fafc' }}
-                    />
-                    <Bar dataKey="income" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
+            <Bar options={options} data={data} />
         </div>
     );
 };

@@ -2,18 +2,33 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header Styling */
+.welcome-section {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
 }
 
 .welcome-section h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
 }
 
 .welcome-section p {
     color: var(--text-secondary);
+    font-size: 1.1rem;
 }
 
+/* Grid Layouts */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -23,33 +38,74 @@
 .charts-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto;
+    /* Allow rows to size based on content */
     gap: 1.5rem;
 }
 
+/* Glassmorphism Card Style */
 .chart-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.4);
+    /* Semi-transparent dark blue */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     min-width: 0;
-    /* Important for Recharts inside Grid/Flex */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .chart-card h3 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+/* Grid Spans */
 .full-width {
     grid-column: 1 / -1;
 }
 
+/* Size utility classes */
+.large {
+    min-height: 400px;
+}
+
+.medium {
+    min-height: 400px;
+}
+
+/* Responsive adjustments */
 @media (max-width: 1024px) {
     .charts-grid {
         grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-section h2 {
+        font-size: 2rem;
     }
 }

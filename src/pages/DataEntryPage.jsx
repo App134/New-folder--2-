@@ -5,21 +5,24 @@ import Footer from '../components/layout/Footer';
 import BackButton from '../components/common/BackButton';
 
 const DataEntryPage = () => {
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+
     const { addRevenueData, addExpenseData, addTrendData } = useData();
     const [activeTab, setActiveTab] = useState('expense');
     const [successMessage, setSuccessMessage] = useState('');
 
     // Expense Form State
     const [expenseDescription, setExpenseDescription] = useState('');
-    const [expenseMonth, setExpenseMonth] = useState('');
+    const [expenseMonth, setExpenseMonth] = useState(currentMonth);
     const [expenseAmount, setExpenseAmount] = useState('');
 
     // Revenue Form State
-    const [revenueMonth, setRevenueMonth] = useState('');
+    const [revenueMonth, setRevenueMonth] = useState(currentMonth);
     const [revenueIncome, setRevenueIncome] = useState('');
 
     // Savings Form State
-    const [savingsMonth, setSavingsMonth] = useState('');
+    const [savingsMonth, setSavingsMonth] = useState(currentMonth);
     const [savingsAmount, setSavingsAmount] = useState('');
 
     const showSuccess = (msg) => {
@@ -101,13 +104,16 @@ const DataEntryPage = () => {
                             </div>
                         </div>
                         <div className="input-group">
-                            <label>Month (Optional)</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Aug (Default: Current)"
+                            <label>Month</label>
+                            <select
                                 value={expenseMonth}
                                 onChange={(e) => setExpenseMonth(e.target.value)}
-                            />
+                                className="styled-select"
+                            >
+                                {MONTHS.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="input-group">
                             <label>Amount</label>
@@ -132,14 +138,15 @@ const DataEntryPage = () => {
                     <form className="form-content" onSubmit={handleRevenueSubmit}>
                         <div className="input-group">
                             <label>Month</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Aug"
+                            <select
                                 value={revenueMonth}
                                 onChange={(e) => setRevenueMonth(e.target.value)}
-                                required
-                                autoFocus
-                            />
+                                className="styled-select"
+                            >
+                                {MONTHS.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="input-group">
                             <label>Income Amount</label>
@@ -166,14 +173,15 @@ const DataEntryPage = () => {
                     <form className="form-content" onSubmit={handleSavingsSubmit}>
                         <div className="input-group">
                             <label>Month</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Aug"
+                            <select
                                 value={savingsMonth}
                                 onChange={(e) => setSavingsMonth(e.target.value)}
-                                required
-                                autoFocus
-                            />
+                                className="styled-select"
+                            >
+                                {MONTHS.map(month => (
+                                    <option key={month} value={month}>{month}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="input-group">
                             <label>Total Savings</label>
