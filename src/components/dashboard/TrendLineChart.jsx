@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -26,36 +26,7 @@ ChartJS.register(
 
 const TrendLineChart = () => {
     const { trendData } = useData();
-    const chartRef = useRef(null);
 
-    // Memoize the chart data to prevent unnecessary re-renders/calculations
-    const chartData = useMemo(() => {
-        // Create canvas context for gradient if ref exists
-        let gradientFill = null;
-        if (chartRef.current) {
-            const ctx = chartRef.current.ctx;
-            gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientFill.addColorStop(0, 'rgba(16, 185, 129, 0.3)'); // #10b981 with opacity
-            gradientFill.addColorStop(1, 'rgba(16, 185, 129, 0)');
-        }
-
-        return {
-            labels: trendData.map(item => item.name),
-            datasets: [
-                {
-                    label: 'Savings',
-                    data: trendData.map(item => item.savings),
-                    fill: true,
-                    backgroundColor: gradientFill || 'rgba(16, 185, 129, 0.1)',
-                    borderColor: '#10b981',
-                    borderWidth: 3,
-                    tension: 0.4, // monotone/smooth curve
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                },
-            ],
-        };
-    }, [trendData]);
 
     const options = {
         responsive: true,

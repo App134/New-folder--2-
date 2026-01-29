@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,8 +8,9 @@ import logo from '../../assets/logo.png';
 
 const Header = ({ onMenuClick }) => {
     // Get user from Auth Context
-    const { currentUser } = useAuth();
-    const userName = currentUser?.displayName || currentUser?.email || 'User';
+    const { currentUser, userProfile } = useAuth();
+    const navigate = useNavigate();
+    const userName = userProfile?.username || currentUser?.displayName || currentUser?.email || 'User';
 
     return (
         <header className="header">
@@ -35,7 +37,11 @@ const Header = ({ onMenuClick }) => {
                     <Bell size={20} />
                     <span className="notification-badge"></span>
                 </button>
-                <div className="user-profile">
+                <div
+                    className="user-profile"
+                    onClick={() => navigate('/user')}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div className="user-info">
                         <span className="user-name">{userName}</span>
                         <span className="user-role">Premium User</span>

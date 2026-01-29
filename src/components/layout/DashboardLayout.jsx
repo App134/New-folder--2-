@@ -5,7 +5,7 @@ import './DashboardLayout.css';
 import Dashboard from '../../pages/Dashboard';
 import Footer from './Footer';
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
     const toggleSidebar = () => {
@@ -22,7 +22,7 @@ const DashboardLayout = () => {
             <main className="main-content">
                 <Header onMenuClick={toggleSidebar} />
                 <div className="content-area">
-                    <Dashboard />
+                    {children ? children : <Dashboard />}
                 </div>
                 <Footer />
                 {/* Mobile Overlay */}

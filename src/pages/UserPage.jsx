@@ -8,20 +8,35 @@ import BackButton from '../components/common/BackButton';
 
 const UserPage = () => {
     const { currency, updateCurrency, theme, updateTheme } = useData();
-    const { currentUser, logout } = useAuth();
+    const { currentUser, userProfile, logout, updateUserProfileDoc, updateAuthProfile } = useAuth();
     const [newName, setNewName] = useState('');
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        if (currentUser) {
-            setNewName(currentUser.displayName || '');
+        if (userProfile?.username) {
+            setNewName(userProfile.username);
+        } else if (currentUser?.displayName) {
+            setNewName(currentUser.displayName);
         }
-    }, [currentUser]);
+    }, [currentUser, userProfile]);
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        // TODO: Implement updateProfile in AuthContext
-        setMessage('Profile update not yet connected to Firebase backend.');
+        setMessage('');
+        try {
+            // Update Firestore Doc (Single Source of Truth)
+            await updateUserProfileDoc({ username: newName });
+
+            // Optionally update Auth Profile for consistency
+            if (currentUser) {
+                await updateAuthProfile({ displayName: newName });
+            }
+
+            setMessage('Profile updated successfully!');
+        } catch (error) {
+            console.error(error);
+            setMessage('Failed to update profile.');
+        }
     };
 
     const handleLogout = async () => {
@@ -44,7 +59,7 @@ const UserPage = () => {
                             <User size={48} color="white" />
                         </div>
                         <div>
-                            <h3 className="user-display-name">{currentUser?.displayName || 'User'}</h3>
+                            <h3 className="user-display-name">{userProfile?.username || currentUser?.displayName || 'User'}</h3>
                             <p className="user-email">{currentUser?.email || 'No email'}</p>
                         </div>
                     </div>

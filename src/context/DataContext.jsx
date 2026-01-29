@@ -23,8 +23,10 @@ export const DataProvider = ({ children }) => {
     const [expenseData, setExpenseData] = useState([]);
     const [trendData, setTrendData] = useState([]);
     const [aggregatedData, setAggregatedData] = useState([]); // For DataList
+    const [allTransactions, setAllTransactions] = useState([]); // For Transaction History
     const [currency, setCurrency] = useState('$');
     const [theme, setTheme] = useState('dark');
+    const [temporaryData, setTemporaryData] = useState([]);
 
     const themes = {
         dark: {
@@ -61,10 +63,12 @@ export const DataProvider = ({ children }) => {
         // 1. Aggregate by Month
         const tempMap = {};
 
+        // 2. Flatten for Transaction History
+        let flatList = [];
+
         rawData.forEach(item => {
-            // Normalize month: use 'month' field if present, otherwise 'name' or 'Unknown'
+            // Aggregate Logic (existing)
             let monthRaw = (item.month || item.name || 'Unknown').trim();
-            // Capitalize first letter
             if (monthRaw && monthRaw.length > 0) {
                 monthRaw = monthRaw.charAt(0).toUpperCase() + monthRaw.slice(1).toLowerCase();
             }
@@ -81,20 +85,87 @@ export const DataProvider = ({ children }) => {
                 };
             }
 
-            tempMap[monthKey].income += Number(item.income) || 0;
-            tempMap[monthKey].expense += Number(item.expense) || 0;
-            tempMap[monthKey].savings += Number(item.savings) || 0;
+            const parseAmount = (val) => {
+                if (val === undefined || val === null) return 0;
+                if (typeof val === 'number') return val;
+                const str = String(val).replace(/[^0-9.-]/g, '');
+                return parseFloat(str) || 0;
+            };
 
-            // Keep track of latest update
+            const inc = parseAmount(item.income) || parseAmount(item.Income) || 0;
+            const exp = parseAmount(item.expense) || parseAmount(item.Expense) || parseAmount(item.value) || 0;
+            const sav = parseAmount(item.savings) || parseAmount(item.Savings) || 0;
+
+            tempMap[monthKey].income += inc;
+            tempMap[monthKey].expense += exp;
+            tempMap[monthKey].savings += sav;
+
             if (item.createdAt && (!tempMap[monthKey].lastUpdated || item.createdAt > tempMap[monthKey].lastUpdated)) {
                 tempMap[monthKey].lastUpdated = item.createdAt;
             }
+
+            // Transaction History Logic
+            // Create separate entries for income, expense, savings if they exist in the same doc
+            const baseTransaction = {
+                id: item.id,
+                date: item.createdAt || new Date().toISOString(),
+                month: monthKey,
+                originalDoc: item
+            };
+
+            if (inc > 0) {
+                flatList.push({
+                    ...baseTransaction,
+                    type: 'credit',
+                    amount: inc,
+                    description: item.description || 'Revenue/Income',
+                    category: 'Income'
+                });
+            }
+            if (exp > 0) {
+                flatList.push({
+                    ...baseTransaction,
+                    type: 'debit',
+                    amount: exp,
+                    description: item.category || item.description || 'Expense',
+                    category: item.category || 'Expense'
+                });
+            }
+            if (sav > 0) {
+                flatList.push({
+                    ...baseTransaction,
+                    type: 'debit', // Treat savings as money leaving the 'available' bucket, or handle differently? 
+                    // User Asked for "Running Balance". Usually Savings is a transfer. 
+                    // For simplicity in a basic app, let's treat it as a debit from "Checking" to "Savings"
+                    // Or maybe just show it as a specific type. 
+                    // Let's mark it as 'savings' type but visually maybe distinct
+                    amount: sav,
+                    description: 'Savings Contribution',
+                    category: 'Savings'
+                });
+            }
         });
 
-        // Convert to array and sort by recency
+        // Sort flatList by Date Ascending to calculate running balance
+        flatList.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let currentBalance = 0;
+        const transactionsWithBalance = flatList.map(t => {
+            if (t.type === 'credit') {
+                currentBalance += t.amount;
+            } else {
+                currentBalance -= t.amount;
+            }
+            return { ...t, runningBalance: currentBalance };
+        });
+
+        // Reverse for display (Newest first)
+        setAllTransactions([...transactionsWithBalance].reverse());
+
+
+        // Convert aggregated map to array and sort by recency
         const aggregatedList = Object.values(tempMap);
         aggregatedList.sort((a, b) => {
-            // Sort by lastUpdated desc
             if (a.lastUpdated > b.lastUpdated) return -1;
             if (a.lastUpdated < b.lastUpdated) return 1;
             return 0;
@@ -102,7 +173,7 @@ export const DataProvider = ({ children }) => {
 
         setAggregatedData(aggregatedList);
 
-        // 2. Prepare Revenue Data
+        // Prepare Sub-States
         const processedRevenue = aggregatedList.map(item => ({
             name: item.month,
             income: item.income,
@@ -110,20 +181,19 @@ export const DataProvider = ({ children }) => {
         }));
         if (processedRevenue.length > 0) setRevenueData(processedRevenue);
 
-        // 3. Prepare Trend Data
         const processedTrend = aggregatedList.map(item => ({
             name: item.month,
             savings: item.savings
         }));
         if (processedTrend.length > 0) setTrendData(processedTrend);
 
-        // 4. Process Expense Data (Group by Category)
+        // Process Expense Data (Group by Category)
         const categoryMap = {};
         rawData.forEach(item => {
-            if (item.category && item.expense) {
-                categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.expense);
-            } else if (item.category && item.value) {
-                categoryMap[item.category] = (categoryMap[item.category] || 0) + Number(item.value);
+            // Re-evaluating based on raw data to catch all categories
+            const val = Number(item.expense) || Number(item.value) || 0;
+            if ((item.category) && val > 0) {
+                categoryMap[item.category] = (categoryMap[item.category] || 0) + val;
             }
         });
 
@@ -191,11 +261,11 @@ export const DataProvider = ({ children }) => {
     // Real-time Data Listener
     useEffect(() => {
         if (!currentUser) {
-            // Reset data if no user
             setAggregatedData([]);
             setRevenueData([]);
             setExpenseData([]);
             setTrendData([]);
+            setAllTransactions([]);
             return;
         }
 
@@ -207,27 +277,32 @@ export const DataProvider = ({ children }) => {
                 id: doc.id,
                 ...doc.data()
             }));
-            processData(fetchedData);
+            // Merge with temporary data (from live sheet)
+            processData([...fetchedData, ...temporaryData]);
         }, (error) => {
             console.error("Error fetching data:", error);
         });
 
         return () => unsubscribe();
-    }, [currentUser]);
+    }, [currentUser, temporaryData]); // Re-run when temporaryData changes
 
-    // Placeholder for manual refresh (Firestore is real-time, but keeping API compatible)
+
+
     const refreshData = () => {
         // No-op for Firestore listener
     };
 
-    const addRevenueData = async (month, income, expense) => {
-        if (!currentUser) return;
+    const addRevenueData = async (month, income, expense, date) => {
+        if (!currentUser) throw new Error("User not authenticated");
+        const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
+        const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
+
         try {
             await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
-                month,
+                month: derivedMonth,
                 income: Number(income),
                 expense: Number(expense),
-                createdAt: new Date().toISOString()
+                createdAt: entryDate
             });
         } catch (err) {
             console.error("Error adding revenue:", err);
@@ -235,18 +310,17 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const addExpenseData = async (month, description, value) => {
-        if (!currentUser) return;
-        const monthToSave = month && month.trim() !== ''
-            ? month
-            : new Date().toLocaleString('default', { month: 'short' });
+    const addExpenseData = async (month, description, value, date) => {
+        if (!currentUser) throw new Error("User not authenticated");
+        const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
+        const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
 
         try {
             await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
-                month: monthToSave,
+                month: derivedMonth,
                 category: description,
                 expense: Number(value),
-                createdAt: new Date().toISOString()
+                createdAt: entryDate
             });
         } catch (err) {
             console.error("Error adding expense:", err);
@@ -254,13 +328,16 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const addTrendData = async (month, savings) => {
-        if (!currentUser) return;
+    const addTrendData = async (month, savings, date) => {
+        if (!currentUser) throw new Error("User not authenticated");
+        const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
+        const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
+
         try {
             await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
-                month,
+                month: derivedMonth,
                 savings: Number(savings),
-                createdAt: new Date().toISOString()
+                createdAt: entryDate
             });
         } catch (err) {
             console.error("Error adding trend data:", err);
@@ -269,12 +346,11 @@ export const DataProvider = ({ children }) => {
     };
 
     const importData = async (newItems) => {
-        if (!currentUser) return;
-        // Batch writes would be better for many items, but keeping it simple for now
+        if (!currentUser) throw new Error("User not authenticated");
         const promises = newItems.map(item => {
             return addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
                 ...item,
-                createdAt: new Date().toISOString()
+                createdAt: item.createdAt || new Date().toISOString() // Ensure createdAt is preserved if passed
             });
         });
 
@@ -287,6 +363,7 @@ export const DataProvider = ({ children }) => {
             expenseData,
             trendData,
             aggregatedData,
+            allTransactions,
             addRevenueData,
             addExpenseData,
             addTrendData,
@@ -295,7 +372,9 @@ export const DataProvider = ({ children }) => {
             updateCurrency,
             theme,
             updateTheme,
-            refreshData
+            updateTheme,
+            refreshData,
+            setTemporaryData
         }}>
             {children}
         </DataContext.Provider>

@@ -8,21 +8,26 @@ const DataEntryPage = () => {
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentMonth = new Date().toLocaleString('default', { month: 'short' });
 
-    const { addRevenueData, addExpenseData, addTrendData } = useData();
+    const { addRevenueData, addExpenseData, addTrendData, currency } = useData();
     const [activeTab, setActiveTab] = useState('expense');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Common Date State (Default to Today)
+    const today = new Date().toISOString().split('T')[0];
 
     // Expense Form State
     const [expenseDescription, setExpenseDescription] = useState('');
-    const [expenseMonth, setExpenseMonth] = useState(currentMonth);
+    const [expenseDate, setExpenseDate] = useState(today);
     const [expenseAmount, setExpenseAmount] = useState('');
 
     // Revenue Form State
-    const [revenueMonth, setRevenueMonth] = useState(currentMonth);
+    const [revenueDate, setRevenueDate] = useState(today);
     const [revenueIncome, setRevenueIncome] = useState('');
 
     // Savings Form State
-    const [savingsMonth, setSavingsMonth] = useState(currentMonth);
+    const [savingsDate, setSavingsDate] = useState(today);
     const [savingsAmount, setSavingsAmount] = useState('');
 
     const showSuccess = (msg) => {
@@ -30,30 +35,70 @@ const DataEntryPage = () => {
         setTimeout(() => setSuccessMessage(''), 3000);
     };
 
-    const handleExpenseSubmit = (e) => {
+    const handleExpenseSubmit = async (e) => {
         e.preventDefault();
-        addExpenseData(expenseMonth, expenseDescription, expenseAmount);
-        setExpenseDescription('');
-        setExpenseMonth('');
-        setExpenseAmount('');
-        showSuccess('Expense successfully added!');
+        setErrorMessage('');
+        setIsSubmitting(true);
+        try {
+            await addExpenseData(null, expenseDescription, expenseAmount, expenseDate);
+            setExpenseDescription('');
+            setExpenseDate(today);
+            setExpenseAmount('');
+            showSuccess('Expense successfully added!');
+        } catch (err) {
+            console.error("Failed to add expense:", err);
+            setErrorMessage('Failed to save expense: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const handleRevenueSubmit = (e) => {
+    const handleRevenueSubmit = async (e) => {
         e.preventDefault();
-        addRevenueData(revenueMonth, revenueIncome, 0);
-        setRevenueMonth('');
-        setRevenueIncome('');
-        showSuccess('Revenue successfully added!');
+        setErrorMessage('');
+        setIsSubmitting(true);
+        try {
+            await addRevenueData(null, revenueIncome, 0, revenueDate);
+            setRevenueDate(today);
+            setRevenueIncome('');
+            showSuccess('Revenue successfully added!');
+        } catch (err) {
+            console.error("Failed to add revenue:", err);
+            setErrorMessage('Failed to save revenue: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const handleSavingsSubmit = (e) => {
+    const handleSavingsSubmit = async (e) => {
         e.preventDefault();
-        addTrendData(savingsMonth, savingsAmount);
-        setSavingsMonth('');
-        setSavingsAmount('');
-        showSuccess('Savings successfully added!');
+        setErrorMessage('');
+        setIsSubmitting(true);
+        try {
+            await addTrendData(null, savingsAmount, savingsDate);
+            setSavingsDate(today);
+            setSavingsAmount('');
+            showSuccess('Savings successfully added!');
+        } catch (err) {
+            console.error("Failed to add savings:", err);
+            setErrorMessage('Failed to save savings: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
+    const formatCurrencyInput = (
+        <span style={{
+            position: 'absolute',
+            left: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'var(--text-secondary)',
+            fontWeight: 'bold'
+        }}>
+            {currency}
+        </span>
+    );
 
     return (
         <div className="data-entry-container">
@@ -89,6 +134,7 @@ const DataEntryPage = () => {
                 <div className="form-card">
                     <div className="form-title">💸 New Expense</div>
                     {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
                     <form className="form-content" onSubmit={handleExpenseSubmit}>
                         <div className="input-group">
                             <label>Description</label>
@@ -104,28 +150,32 @@ const DataEntryPage = () => {
                             </div>
                         </div>
                         <div className="input-group">
-                            <label>Month</label>
-                            <select
-                                value={expenseMonth}
-                                onChange={(e) => setExpenseMonth(e.target.value)}
-                                className="styled-select"
-                            >
-                                {MONTHS.map(month => (
-                                    <option key={month} value={month}>{month}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label>Amount</label>
+                            <label>Date</label>
                             <input
-                                type="number"
-                                placeholder="0.00"
-                                value={expenseAmount}
-                                onChange={(e) => setExpenseAmount(e.target.value)}
+                                type="date"
+                                value={expenseDate}
+                                onChange={(e) => setExpenseDate(e.target.value)}
+                                className="styled-input"
                                 required
                             />
                         </div>
-                        <button type="submit" className="submit-btn">Add Expense</button>
+                        <div className="input-group">
+                            <label>Amount</label>
+                            <div style={{ position: 'relative' }}>
+                                {formatCurrencyInput}
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={expenseAmount}
+                                    onChange={(e) => setExpenseAmount(e.target.value)}
+                                    required
+                                    style={{ paddingLeft: '2.5rem' }}
+                                />
+                            </div>
+                        </div>
+                        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Add Expense'}
+                        </button>
                     </form>
                 </div>
             )}
@@ -135,31 +185,34 @@ const DataEntryPage = () => {
                 <div className="form-card">
                     <div className="form-title">💰 Record Revenue</div>
                     {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
                     <form className="form-content" onSubmit={handleRevenueSubmit}>
                         <div className="input-group">
-                            <label>Month</label>
-                            <select
-                                value={revenueMonth}
-                                onChange={(e) => setRevenueMonth(e.target.value)}
-                                className="styled-select"
-                            >
-                                {MONTHS.map(month => (
-                                    <option key={month} value={month}>{month}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label>Income Amount</label>
+                            <label>Date</label>
                             <input
-                                type="number"
-                                placeholder="0.00"
-                                value={revenueIncome}
-                                onChange={(e) => setRevenueIncome(e.target.value)}
+                                type="date"
+                                value={revenueDate}
+                                onChange={(e) => setRevenueDate(e.target.value)}
+                                className="styled-input"
                                 required
                             />
                         </div>
-                        <button type="submit" className="submit-btn" style={{ background: 'linear-gradient(135deg, var(--accent-secondary), #059669)' }}>
-                            Add Revenue
+                        <div className="input-group">
+                            <label>Income Amount</label>
+                            <div style={{ position: 'relative' }}>
+                                {formatCurrencyInput}
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={revenueIncome}
+                                    onChange={(e) => setRevenueIncome(e.target.value)}
+                                    required
+                                    style={{ paddingLeft: '2.5rem' }}
+                                />
+                            </div>
+                        </div>
+                        <button type="submit" className="submit-btn" disabled={isSubmitting} style={{ background: 'linear-gradient(135deg, var(--accent-secondary), #059669)', opacity: isSubmitting ? 0.7 : 1 }}>
+                            {isSubmitting ? 'Saving...' : 'Add Revenue'}
                         </button>
                     </form>
                 </div>
@@ -170,31 +223,34 @@ const DataEntryPage = () => {
                 <div className="form-card">
                     <div className="form-title">🏦 Update Savings</div>
                     {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
                     <form className="form-content" onSubmit={handleSavingsSubmit}>
                         <div className="input-group">
-                            <label>Month</label>
-                            <select
-                                value={savingsMonth}
-                                onChange={(e) => setSavingsMonth(e.target.value)}
-                                className="styled-select"
-                            >
-                                {MONTHS.map(month => (
-                                    <option key={month} value={month}>{month}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label>Total Savings</label>
+                            <label>Date</label>
                             <input
-                                type="number"
-                                placeholder="0.00"
-                                value={savingsAmount}
-                                onChange={(e) => setSavingsAmount(e.target.value)}
+                                type="date"
+                                value={savingsDate}
+                                onChange={(e) => setSavingsDate(e.target.value)}
+                                className="styled-input"
                                 required
                             />
                         </div>
-                        <button type="submit" className="submit-btn" style={{ background: 'linear-gradient(135deg, var(--accent-tertiary), #7c3aed)' }}>
-                            Add Savings
+                        <div className="input-group">
+                            <label>Total Savings</label>
+                            <div style={{ position: 'relative' }}>
+                                {formatCurrencyInput}
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={savingsAmount}
+                                    onChange={(e) => setSavingsAmount(e.target.value)}
+                                    required
+                                    style={{ paddingLeft: '2.5rem' }}
+                                />
+                            </div>
+                        </div>
+                        <button type="submit" className="submit-btn" disabled={isSubmitting} style={{ background: 'linear-gradient(135deg, var(--accent-tertiary), #7c3aed)', opacity: isSubmitting ? 0.7 : 1 }}>
+                            {isSubmitting ? 'Saving...' : 'Add Savings'}
                         </button>
                     </form>
                 </div>

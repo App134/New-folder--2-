@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -9,6 +9,7 @@ import {
     signInWithPopup,
     updateProfile
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -16,13 +17,36 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const signup = async (email, password, name) => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, {
+        const user = userCredential.user;
+
+        // 1. Update Auth Profile
+        await updateProfile(user, {
             displayName: name
         });
+
+        // 2. Create Firestore User Document (Single Source of Truth)
+        try {
+            await setDoc(doc(db, 'users', user.uid), {
+                username: name,
+                email: email,
+                createdAt: new Date().toISOString(),
+                settings: {
+                    preferences: {
+                        theme: 'dark', // Default
+                        currency: '$'  // Default
+                    }
+                }
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error creating user document:", error);
+            // Don't block signup success even if firestore fails (rare)
+        }
+
         return userCredential;
     };
 
@@ -36,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+        setUserProfile(null);
         return signOut(auth);
     };
 
@@ -47,9 +72,38 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUserProfileDoc = async (data) => {
+        if (!currentUser) return;
+        try {
+            const userRef = doc(db, 'users', currentUser.uid);
+            await setDoc(userRef, data, { merge: true });
+            await fetchUserProfile(currentUser.uid); // Refresh local state
+        } catch (error) {
+            console.error("Error updating user profile doc:", error);
+            throw error;
+        }
+    };
+
+    const fetchUserProfile = async (uid) => {
+        try {
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                setUserProfile(userSnap.data());
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+        }
+    };
+
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setCurrentUser(user);
+            if (user) {
+                await fetchUserProfile(user.uid);
+            } else {
+                setUserProfile(null);
+            }
             setLoading(false);
         });
 
@@ -58,12 +112,15 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         currentUser,
+        userProfile,
         signup,
         login,
         loginWithGoogle,
         logout,
         loading,
-        updateAuthProfile
+        updateAuthProfile,
+        updateUserProfileDoc,
+        fetchUserProfile // Expose if we need to manually refresh
     };
 
     return (

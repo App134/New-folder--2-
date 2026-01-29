@@ -3,13 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 import AnimatedPage from '../components/common/AnimatedPage';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, loginWithGoogle } = useAuth();
+
+    const { login, loginWithGoogle, fetchUserProfile } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -27,10 +30,45 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
+    ti
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const result = await loginWithGoogle();
+            const user = result.user;
+
+            // Check if user document exists, if not or missing data, create/update it
+            const userRef = doc(db, 'users', user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (!userSnap.exists() || !userSnap.data().username) {
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    username: user.displayName || 'User', // Fallback if displayName is missing
+                    createdAt: new Date().toISOString()
+                };
+
+                // Use setDoc with merge: true to avoid overwriting other fields if document exists but username is missing
+                await setDoc(userRef, userData, { merge: true });
+
+                // Refresh the user profile in context so the new data is available immediately
+                await fetchUserProfile(user.uid);
+            }
+
+            navigate('/');
+        } catch (err) {
+            console.error("Google Sign In Error:", err);
+            setError('Google sign in failed: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <AnimatedPage>
             <div className="login-page">
+
                 {/* Left Side - Visuals */}
                 <div className="login-visual">
                     <div className="shape shape-1"></div>
@@ -92,17 +130,7 @@ const LoginPage = () => {
                             <button
                                 type="button"
                                 className="google-btn"
-                                onClick={async () => {
-                                    try {
-                                        setLoading(true);
-                                        await loginWithGoogle();
-                                        navigate('/');
-                                    } catch (err) {
-                                        setError('Google sign in failed');
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                }}
+                                onClick={handleGoogleLogin}
                                 disabled={loading}
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24">

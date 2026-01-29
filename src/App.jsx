@@ -6,7 +6,9 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DataEntryPage from './pages/DataEntryPage';
+import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import UserPage from './pages/UserPage';
+import GoogleSheetPage from './pages/GoogleSheetPage';
 import { DataProvider } from './context/DataContext';
 import { AuthProvider } from './context/AuthContext';
 
@@ -39,6 +41,26 @@ function AnimatedRoutes() {
           element={
             <ProtectedRoute>
               <UserPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <TransactionHistoryPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/google-sheet"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <GoogleSheetPage />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />

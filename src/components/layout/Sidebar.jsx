@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Wallet, Settings, LogOut, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, Wallet, Settings, LogOut, PlusCircle, FileSpreadsheet } from 'lucide-react';
 import './Sidebar.css';
 
 import { useAuth } from '../../context/AuthContext';
@@ -9,8 +9,8 @@ import logo from '../../assets/logo.png';
 
 const Sidebar = ({ isOpen, onClose }) => {
     // Get user from Auth Context
-    const { currentUser, logout } = useAuth();
-    const userName = currentUser?.displayName || currentUser?.email || 'User';
+    const { currentUser, userProfile, logout } = useAuth();
+    const userName = userProfile?.username || currentUser?.displayName || currentUser?.email || 'User';
 
     const handleLogout = async () => {
         try {
@@ -54,6 +54,18 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <Link to="/user" onClick={handleNavClick}>
                             <Settings size={20} />
                             <span>Settings</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/transactions" onClick={handleNavClick}>
+                            <Wallet size={20} />
+                            <span>Transactions</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/google-sheet" onClick={handleNavClick}>
+                            <FileSpreadsheet size={20} />
+                            <span>Google Sheets</span>
                         </Link>
                     </li>
                 </ul>
