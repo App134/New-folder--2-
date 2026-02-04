@@ -137,11 +137,7 @@
     color: #ef4444;
 }
 
-.t-balance {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 0.2rem;
-}
+
 
 .empty-state {
     text-align: center;

@@ -3,12 +3,10 @@ import { useData } from '../context/DataContext';
 import './DataEntryPage.css';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/common/BackButton';
+import { Wallet, TrendingUp, CreditCard, Save } from 'lucide-react';
 
 const DataEntryPage = () => {
-    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
-
-    const { addRevenueData, addExpenseData, addTrendData, currency } = useData();
+    const { addRevenueData, addExpenseData, repayCreditCard, currency } = useData();
     const [activeTab, setActiveTab] = useState('expense');
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -21,14 +19,16 @@ const DataEntryPage = () => {
     const [expenseDescription, setExpenseDescription] = useState('');
     const [expenseDate, setExpenseDate] = useState(today);
     const [expenseAmount, setExpenseAmount] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('Debit Card');
+    const [savingsSource, setSavingsSource] = useState('');
 
     // Revenue Form State
     const [revenueDate, setRevenueDate] = useState(today);
     const [revenueIncome, setRevenueIncome] = useState('');
 
-    // Savings Form State
-    const [savingsDate, setSavingsDate] = useState(today);
-    const [savingsAmount, setSavingsAmount] = useState('');
+    // Repayment Form State
+    const [repaymentDate, setRepaymentDate] = useState(today);
+    const [repaymentAmount, setRepaymentAmount] = useState('');
 
     const showSuccess = (msg) => {
         setSuccessMessage(msg);
@@ -40,7 +40,7 @@ const DataEntryPage = () => {
         setErrorMessage('');
         setIsSubmitting(true);
         try {
-            await addExpenseData(null, expenseDescription, expenseAmount, expenseDate);
+            await addExpenseData(null, expenseDescription, expenseAmount, expenseDate, paymentMethod, paymentMethod === 'From Savings' ? savingsSource : '');
             setExpenseDescription('');
             setExpenseDate(today);
             setExpenseAmount('');
@@ -70,18 +70,18 @@ const DataEntryPage = () => {
         }
     };
 
-    const handleSavingsSubmit = async (e) => {
+    const handleRepaymentSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage('');
         setIsSubmitting(true);
         try {
-            await addTrendData(null, savingsAmount, savingsDate);
-            setSavingsDate(today);
-            setSavingsAmount('');
-            showSuccess('Savings successfully added!');
+            await repayCreditCard(repaymentAmount, repaymentDate);
+            setRepaymentDate(today);
+            setRepaymentAmount('');
+            showSuccess('Repayment recorded successfully!');
         } catch (err) {
-            console.error("Failed to add savings:", err);
-            setErrorMessage('Failed to save savings: ' + err.message);
+            console.error("Failed to add repayment:", err);
+            setErrorMessage('Failed to save repayment: ' + err.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -102,161 +102,217 @@ const DataEntryPage = () => {
 
     return (
         <div className="data-entry-container">
+            {/* Background Shapes */}
+            <div className="shape shape-1"></div>
+            <div className="shape shape-2"></div>
+            <div className="shape shape-3"></div>
+
             <BackButton />
-            <div className="data-entry-header">
-                <h1>Financial Data Entry</h1>
-                <p>Manage your expenses, revenue, and savings in one place.</p>
-            </div>
 
-            <div className="tabs-container">
-                <button
-                    className={`tab-button ${activeTab === 'expense' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('expense')}
-                >
-                    Add Expense
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'revenue' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('revenue')}
-                >
-                    Add Revenue
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'savings' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('savings')}
-                >
-                    Add Savings
-                </button>
-            </div>
-
-            {/* Expense Form */}
-            {activeTab === 'expense' && (
-                <div className="form-card">
-                    <div className="form-title">💸 New Expense</div>
-                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
-                    <form className="form-content" onSubmit={handleExpenseSubmit}>
-                        <div className="input-group">
-                            <label>Description</label>
-                            <div className="input-wrapper">
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Groceries, Rent, Utilities"
-                                    value={expenseDescription}
-                                    onChange={(e) => setExpenseDescription(e.target.value)}
-                                    required
-                                    autoFocus
-                                />
-                            </div>
-                        </div>
-                        <div className="input-group">
-                            <label>Date</label>
-                            <input
-                                type="date"
-                                value={expenseDate}
-                                onChange={(e) => setExpenseDate(e.target.value)}
-                                className="styled-input"
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Amount</label>
-                            <div style={{ position: 'relative' }}>
-                                {formatCurrencyInput}
-                                <input
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={expenseAmount}
-                                    onChange={(e) => setExpenseAmount(e.target.value)}
-                                    required
-                                    style={{ paddingLeft: '2.5rem' }}
-                                />
-                            </div>
-                        </div>
-                        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                            {isSubmitting ? 'Saving...' : 'Add Expense'}
-                        </button>
-                    </form>
+            <div className="data-entry-content-wrapper">
+                <div className="data-entry-header">
+                    <h1>Financial Data Entry</h1>
+                    <p>Track your flow. Manage your growth.</p>
                 </div>
-            )}
 
-            {/* Revenue Form */}
-            {activeTab === 'revenue' && (
-                <div className="form-card">
-                    <div className="form-title">💰 Record Revenue</div>
-                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
-                    <form className="form-content" onSubmit={handleRevenueSubmit}>
-                        <div className="input-group">
-                            <label>Date</label>
-                            <input
-                                type="date"
-                                value={revenueDate}
-                                onChange={(e) => setRevenueDate(e.target.value)}
-                                className="styled-input"
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Income Amount</label>
-                            <div style={{ position: 'relative' }}>
-                                {formatCurrencyInput}
-                                <input
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={revenueIncome}
-                                    onChange={(e) => setRevenueIncome(e.target.value)}
-                                    required
-                                    style={{ paddingLeft: '2.5rem' }}
-                                />
-                            </div>
-                        </div>
-                        <button type="submit" className="submit-btn" disabled={isSubmitting} style={{ background: 'linear-gradient(135deg, var(--accent-secondary), #059669)', opacity: isSubmitting ? 0.7 : 1 }}>
-                            {isSubmitting ? 'Saving...' : 'Add Revenue'}
-                        </button>
-                    </form>
+                <div className="tabs-container">
+                    <button
+                        className={`tab-button ${activeTab === 'expense' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('expense')}
+                    >
+                        <Wallet size={18} />
+                        Expense
+                    </button>
+                    <button
+                        className={`tab-button ${activeTab === 'revenue' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('revenue')}
+                    >
+                        <TrendingUp size={18} />
+                        Revenue
+                    </button>
+                    <button
+                        className={`tab-button ${activeTab === 'repayment' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('repayment')}
+                    >
+                        <CreditCard size={18} />
+                        Repayment
+                    </button>
                 </div>
-            )}
 
-            {/* Savings Form */}
-            {activeTab === 'savings' && (
-                <div className="form-card">
-                    <div className="form-title">🏦 Update Savings</div>
-                    {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                    {errorMessage && <div className="error-message" style={{ color: 'var(--accent-danger)', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>⚠️ {errorMessage}</div>}
-                    <form className="form-content" onSubmit={handleSavingsSubmit}>
-                        <div className="input-group">
-                            <label>Date</label>
-                            <input
-                                type="date"
-                                value={savingsDate}
-                                onChange={(e) => setSavingsDate(e.target.value)}
-                                className="styled-input"
-                                required
-                            />
+                {/* Expense Form */}
+                {activeTab === 'expense' && (
+                    <div className="form-card">
+                        <div className="form-title">
+                            <Wallet size={24} className="form-icon" style={{ color: '#ef4444' }} />
+                            New Expense
                         </div>
-                        <div className="input-group">
-                            <label>Total Savings</label>
-                            <div style={{ position: 'relative' }}>
-                                {formatCurrencyInput}
-                                <input
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={savingsAmount}
-                                    onChange={(e) => setSavingsAmount(e.target.value)}
-                                    required
-                                    style={{ paddingLeft: '2.5rem' }}
-                                />
+                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
+                        <form className="form-content" onSubmit={handleExpenseSubmit}>
+                            <div className="input-group">
+                                <label>Description</label>
+                                <div className="input-wrapper">
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Groceries, Rent..."
+                                        value={expenseDescription}
+                                        onChange={(e) => setExpenseDescription(e.target.value)}
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
                             </div>
+                            <div className="row-group">
+                                <div className="input-group">
+                                    <label>Date</label>
+                                    <input
+                                        type="date"
+                                        value={expenseDate}
+                                        onChange={(e) => setExpenseDate(e.target.value)}
+                                        className="styled-input"
+                                        required
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Amount</label>
+                                    <div className="input-wrapper">
+                                        {formatCurrencyInput}
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={expenseAmount}
+                                            onChange={(e) => setExpenseAmount(e.target.value)}
+                                            required
+                                            style={{ paddingLeft: '2.5rem' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="input-group">
+                                <label>Payment Method</label>
+                                <select
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="styled-select"
+                                >
+                                    <option value="Debit Card">Debit Card</option>
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="From Savings">From Savings</option>
+                                </select>
+                            </div>
+
+                            {paymentMethod === 'From Savings' && (
+                                <div className="input-group">
+                                    <label>Source Name</label>
+                                    <div className="input-wrapper">
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Emergency Fund"
+                                            value={savingsSource}
+                                            onChange={(e) => setSavingsSource(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            <button type="submit" className="submit-btn expense-btn" disabled={isSubmitting}>
+                                {isSubmitting ? 'Saving...' : 'Add Expense'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Revenue Form */}
+                {activeTab === 'revenue' && (
+                    <div className="form-card">
+                        <div className="form-title">
+                            <TrendingUp size={24} className="form-icon" style={{ color: '#10b981' }} />
+                            Record Revenue
                         </div>
-                        <button type="submit" className="submit-btn" disabled={isSubmitting} style={{ background: 'linear-gradient(135deg, var(--accent-tertiary), #7c3aed)', opacity: isSubmitting ? 0.7 : 1 }}>
-                            {isSubmitting ? 'Saving...' : 'Add Savings'}
-                        </button>
-                    </form>
+                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
+                        <form className="form-content" onSubmit={handleRevenueSubmit}>
+                            <div className="row-group">
+                                <div className="input-group">
+                                    <label>Date</label>
+                                    <input
+                                        type="date"
+                                        value={revenueDate}
+                                        onChange={(e) => setRevenueDate(e.target.value)}
+                                        className="styled-input"
+                                        required
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Income Amount</label>
+                                    <div className="input-wrapper">
+                                        {formatCurrencyInput}
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={revenueIncome}
+                                            onChange={(e) => setRevenueIncome(e.target.value)}
+                                            required
+                                            style={{ paddingLeft: '2.5rem' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" className="submit-btn revenue-btn" disabled={isSubmitting}>
+                                {isSubmitting ? 'Saving...' : 'Add Revenue'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Repayment Form */}
+                {activeTab === 'repayment' && (
+                    <div className="form-card">
+                        <div className="form-title">
+                            <CreditCard size={24} className="form-icon" style={{ color: '#8b5cf6' }} />
+                            Card Repayment
+                        </div>
+                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
+                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
+                        <form className="form-content" onSubmit={handleRepaymentSubmit}>
+                            <div className="row-group">
+                                <div className="input-group">
+                                    <label>Date</label>
+                                    <input
+                                        type="date"
+                                        value={repaymentDate}
+                                        onChange={(e) => setRepaymentDate(e.target.value)}
+                                        className="styled-input"
+                                        required
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Repayment Amount</label>
+                                    <div className="input-wrapper">
+                                        {formatCurrencyInput}
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={repaymentAmount}
+                                            onChange={(e) => setRepaymentAmount(e.target.value)}
+                                            required
+                                            style={{ paddingLeft: '2.5rem' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" className="submit-btn repayment-btn" disabled={isSubmitting}>
+                                {isSubmitting ? 'Processing...' : 'Record Payment'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                <div className="footer-section">
+                    <Footer />
                 </div>
-            )}
-            <div style={{ marginTop: 'auto', width: '100%' }}>
-                <Footer />
             </div>
         </div>
     );

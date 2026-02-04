@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <li className="nav-item">
                         <Link to="/transactions" onClick={handleNavClick}>
                             <Wallet size={20} />
-                            <span>Transactions</span>
+                            <span>Finance History</span>
                         </Link>
                     </li>
                     <li className="nav-item">

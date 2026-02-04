@@ -34,7 +34,7 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-    const { revenueData, trendData, currency, allTransactions } = useData();
+    const { revenueData, trendData, currency, allTransactions, creditCardPayable } = useData();
     const { currentUser, userProfile } = useAuth();
 
     const userName = userProfile?.username || currentUser?.displayName || 'User';
@@ -112,6 +112,14 @@ const Dashboard = () => {
                     icon={PiggyBank}
                     color="green"
                 />
+                <SummaryCard
+                    title="Credit Card Payable"
+                    amount={`${currency}${creditCardPayable?.toLocaleString() || 0}`}
+                    change="Outstanding"
+                    isPositive={false}
+                    icon={CreditCard}
+                    color="orange"
+                />
             </motion.div>
 
             <div className="charts-grid">
@@ -132,7 +140,7 @@ const Dashboard = () => {
                     {/* Recent Transactions */}
                     <div style={{ marginTop: '0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ margin: 0 }}>Recent Transactions</h3>
+                            <h3 style={{ margin: 0 }}>Recent Finance History</h3>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Showing last 5</span>
                         </div>
 

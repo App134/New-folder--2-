@@ -27,6 +27,7 @@ export const DataProvider = ({ children }) => {
     const [currency, setCurrency] = useState('$');
     const [theme, setTheme] = useState('dark');
     const [temporaryData, setTemporaryData] = useState([]);
+    const [creditCardPayable, setCreditCardPayable] = useState(0);
 
     const themes = {
         dark: {
@@ -134,14 +135,19 @@ export const DataProvider = ({ children }) => {
             if (sav > 0) {
                 flatList.push({
                     ...baseTransaction,
-                    type: 'debit', // Treat savings as money leaving the 'available' bucket, or handle differently? 
-                    // User Asked for "Running Balance". Usually Savings is a transfer. 
-                    // For simplicity in a basic app, let's treat it as a debit from "Checking" to "Savings"
-                    // Or maybe just show it as a specific type. 
-                    // Let's mark it as 'savings' type but visually maybe distinct
+                    type: 'debit',
                     amount: sav,
-                    description: 'Savings Contribution',
+                    description: 'Manual Savings Contribution',
                     category: 'Savings'
+                });
+            }
+            if (item.type === 'repayment') {
+                flatList.push({
+                    ...baseTransaction,
+                    type: 'debit', // Money leaves bank to pay CC
+                    amount: Number(item.amount),
+                    description: 'Credit Card Repayment',
+                    category: 'Repayment'
                 });
             }
         });
@@ -154,7 +160,11 @@ export const DataProvider = ({ children }) => {
             if (t.type === 'credit') {
                 currentBalance += t.amount;
             } else {
-                currentBalance -= t.amount;
+                // If it's a Credit Card expense, it doesn't reduce "Cash" running balance immediately
+                // Only "Repayment" or "Debit Card" or "Cash" reduces running balance
+                if (t.originalDoc?.paymentMethod !== 'Credit Card') {
+                    currentBalance -= t.amount;
+                }
             }
             return { ...t, runningBalance: currentBalance };
         });
@@ -183,9 +193,31 @@ export const DataProvider = ({ children }) => {
 
         const processedTrend = aggregatedList.map(item => ({
             name: item.month,
-            savings: item.savings
+            savings: item.income - item.expense // Auto Savings Calculation: Income - Expense
         }));
         if (processedTrend.length > 0) setTrendData(processedTrend);
+
+        // Credit Card Payable Calculation
+        // Payable = Total Credit Card Spending - Total Repayments
+        let totalCCSpending = 0;
+        let totalRepayments = 0;
+
+        flatList.forEach(t => {
+            if (t.originalDoc?.paymentMethod === 'Credit Card') {
+                totalCCSpending += t.amount;
+            }
+            if (t.category === 'Repayment') {
+                totalRepayments += t.amount;
+            }
+        });
+
+        const ccPayable = totalCCSpending - totalRepayments;
+        // Expose this via a new state or attach to aggregatedData?
+        // Let's attach to the latest month or just as a global context value
+        // For now, let's just log it or we might need another state variable.
+        // Actually, let's keep it simple: We'll calculate it in Dashboard using allTransactions if needed, 
+        // OR essentially we can just expose it. A new state is cleaner.
+
 
         // Process Expense Data (Group by Category)
         const categoryMap = {};
@@ -202,6 +234,8 @@ export const DataProvider = ({ children }) => {
             value: categoryMap[key]
         }));
         if (processedExpense.length > 0) setExpenseData(processedExpense);
+
+        setCreditCardPayable(ccPayable);
     };
 
     const updateTheme = async (newTheme) => {
@@ -310,7 +344,7 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const addExpenseData = async (month, description, value, date) => {
+    const addExpenseData = async (month, description, value, date, paymentMethod = 'Debit Card', source = '') => {
         if (!currentUser) throw new Error("User not authenticated");
         const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
         const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
@@ -320,10 +354,32 @@ export const DataProvider = ({ children }) => {
                 month: derivedMonth,
                 category: description,
                 expense: Number(value),
-                createdAt: entryDate
+                createdAt: entryDate,
+                paymentMethod,
+                source, // specific source if applicable (e.g. 'Emergency Fund')
+                type: 'expense'
             });
         } catch (err) {
             console.error("Error adding expense:", err);
+            throw err;
+        }
+    };
+
+    const repayCreditCard = async (amount, date) => {
+        if (!currentUser) throw new Error("User not authenticated");
+        const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
+        const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
+
+        try {
+            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+                month: derivedMonth,
+                amount: Number(amount),
+                createdAt: entryDate,
+                type: 'repayment',
+                description: 'Credit Card Repayment'
+            });
+        } catch (err) {
+            console.error("Error adding repayment:", err);
             throw err;
         }
     };
@@ -364,9 +420,11 @@ export const DataProvider = ({ children }) => {
             trendData,
             aggregatedData,
             allTransactions,
+            creditCardPayable,
             addRevenueData,
             addExpenseData,
             addTrendData,
+            repayCreditCard,
             importData,
             currency,
             updateCurrency,

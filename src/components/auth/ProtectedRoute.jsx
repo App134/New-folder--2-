@@ -13,6 +13,13 @@ const ProtectedRoute = ({ children }) => {
         return <Navigate to="/login" replace />;
     }
 
+    if (!currentUser.emailVerified) {
+        // Redirect to login if email not verified
+        // Ideally we should show a message, but logic in LoginPage handles logout if they try to login unverified.
+        // If they are here, it means they have a session but aren't verified.
+        return <Navigate to="/login" replace />;
+    }
+
     return children;
 };
 

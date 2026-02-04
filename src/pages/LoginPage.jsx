@@ -5,14 +5,16 @@ import './LoginPage.css';
 import AnimatedPage from '../components/common/AnimatedPage';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { login, loginWithGoogle, fetchUserProfile } = useAuth();
+    const { login, loginWithGoogle, fetchUserProfile, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -21,7 +23,15 @@ const LoginPage = () => {
         try {
             setError('');
             setLoading(true);
-            await login(email, password);
+            const result = await login(email, password);
+
+            if (!result.user.emailVerified) {
+                await logout();
+                setError('Please verify your email before logging in.');
+                setLoading(false);
+                return;
+            }
+
             navigate('/');
         } catch (err) {
             console.error(err);
@@ -30,31 +40,13 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
-    ti
+
     const handleGoogleLogin = async () => {
         try {
             setLoading(true);
-            const result = await loginWithGoogle();
-            const user = result.user;
-
-            // Check if user document exists, if not or missing data, create/update it
-            const userRef = doc(db, 'users', user.uid);
-            const userSnap = await getDoc(userRef);
-
-            if (!userSnap.exists() || !userSnap.data().username) {
-                const userData = {
-                    uid: user.uid,
-                    email: user.email,
-                    username: user.displayName || 'User', // Fallback if displayName is missing
-                    createdAt: new Date().toISOString()
-                };
-
-                // Use setDoc with merge: true to avoid overwriting other fields if document exists but username is missing
-                await setDoc(userRef, userData, { merge: true });
-
-                // Refresh the user profile in context so the new data is available immediately
-                await fetchUserProfile(user.uid);
-            }
+            // Pass the email state as a hint if it's not empty
+            const result = await loginWithGoogle(email);
+            await fetchUserProfile(result.user.uid);
 
             navigate('/');
         } catch (err) {
@@ -107,15 +99,35 @@ const LoginPage = () => {
 
                             <div className="input-group">
                                 <label htmlFor="password">Password</label>
-                                <div className="input-wrapper">
+                                <div className="input-wrapper" style={{ position: 'relative' }}>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         id="password"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
+                                        style={{ paddingRight: '2.5rem' }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0.75rem',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#94a3b8',
+                                            padding: 0,
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
 

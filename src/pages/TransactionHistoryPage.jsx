@@ -23,10 +23,8 @@ const TransactionHistoryPage = () => {
         <div className="transaction-page-container">
             <div className="transaction-header">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <h1>Transaction History</h1>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Running Balance & Details
-                    </span>
+                    <h1>Finance History</h1>
+
                 </div>
                 <div className="header-actions">
                     <div style={{ position: 'relative' }}>
@@ -78,9 +76,7 @@ const TransactionHistoryPage = () => {
                                 <div className={`t-amount ${t.type}`}>
                                     {t.type === 'credit' ? '+' : '-'} {currency}{t.amount.toLocaleString()}
                                 </div>
-                                <div className="t-balance">
-                                    Bal: {currency}{t.runningBalance.toLocaleString()}
-                                </div>
+
                             </div>
                         </div>
                     ))

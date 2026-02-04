@@ -7,7 +7,8 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    updateProfile
+    updateProfile,
+    sendEmailVerification
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -28,6 +29,9 @@ export const AuthProvider = ({ children }) => {
         await updateProfile(user, {
             displayName: name
         });
+
+        // 2. Send Email Verification
+        await sendEmailVerification(user);
 
         // 2. Create Firestore User Document (Single Source of Truth)
         try {
@@ -54,9 +58,62 @@ export const AuthProvider = ({ children }) => {
         return signInWithEmailAndPassword(auth, email, password);
     };
 
-    const loginWithGoogle = () => {
+    const loginWithGoogle = async (emailHint = null) => {
         const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider);
+
+        if (emailHint) {
+            provider.setCustomParameters({
+                login_hint: emailHint
+            });
+        }
+
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Verify if the signed-in email matches the hint (if strictly required)
+        if (emailHint && user.email.toLowerCase() !== emailHint.toLowerCase()) {
+            // Optional: You could sign them out immediately if you want to be strict
+            // await signOut(auth);
+            // throw new Error("The selected Google account does not match the entered email.");
+
+            // For now, let's just warn or proceed. The user request implies validation.
+            // Let's enforce it to match the requirement: "Show a clear validation message".
+            // So we will throw an error.
+            await signOut(auth); // Sign out the incorrect user
+            throw new Error(`Please sign in with ${emailHint}.`);
+        }
+
+        try {
+            // Check if user document exists
+            const userRef = doc(db, 'users', user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (!userSnap.exists()) {
+                // Create new user document
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email,
+                    username: user.displayName || 'User',
+                    createdAt: new Date().toISOString(),
+                    settings: {
+                        preferences: {
+                            theme: 'dark',
+                            currency: '$'
+                        }
+                    }
+                }, { merge: true });
+            } else if (!userSnap.data().username) {
+                // Update existing doc if username is missing (legacy fix)
+                await setDoc(userRef, {
+                    username: user.displayName || 'User'
+                }, { merge: true });
+            }
+        } catch (error) {
+            console.error("Error creating/checking user document after Google Sign In:", error);
+            // We don't block the login, but we log the error
+        }
+
+        return result;
     };
 
     const logout = () => {

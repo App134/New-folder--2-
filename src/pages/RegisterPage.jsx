@@ -3,15 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css'; // Reusing Login styles for consistency
 import AnimatedPage from '../components/common/AnimatedPage';
+import { Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const { signup, loginWithGoogle } = useAuth();
+    const { signup, loginWithGoogle, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -52,7 +55,9 @@ const RegisterPage = () => {
             setErrors({});
             setLoading(true);
             await signup(email, password, name);
-            navigate('/'); // Redirect to dashboard after signup
+            await logout(); // Logout immediately so they have to login again after verifying
+            // navigate('/login'); // OLD
+            navigate('/verify-email', { state: { email } });
         } catch (err) {
             console.error(err);
             setErrors({ global: 'Failed to create an account: ' + err.message });
@@ -114,30 +119,70 @@ const RegisterPage = () => {
 
                             <div className="input-group">
                                 <label htmlFor="password">Password</label>
-                                <div className="input-wrapper">
+                                <div className="input-wrapper" style={{ position: 'relative' }}>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         id="password"
                                         placeholder="Create a password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
+                                        style={{ paddingRight: '2.5rem' }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0.75rem',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#94a3b8',
+                                            padding: 0,
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                                 {errors.password && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>{errors.password}</span>}
                             </div>
 
                             <div className="input-group">
                                 <label htmlFor="confirm-password">Confirm Password</label>
-                                <div className="input-wrapper">
+                                <div className="input-wrapper" style={{ position: 'relative' }}>
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? "text" : "password"}
                                         id="confirm-password"
                                         placeholder="Confirm your password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
+                                        style={{ paddingRight: '2.5rem' }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0.75rem',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#94a3b8',
+                                            padding: 0,
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                                 {errors.confirmPassword && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>{errors.confirmPassword}</span>}
                             </div>
