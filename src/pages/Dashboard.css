@@ -1,111 +1,92 @@
 .dashboard-container {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    position: relative;
-    z-index: 1;
-}
-
-/* Header Styling */
-.welcome-section {
-    margin-bottom: 1rem;
-    color: var(--text-primary);
-}
-
-.welcome-section h2 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.02em;
-}
-
-.welcome-section p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-}
-
-/* Grid Layouts */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.charts-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto auto;
-    /* Allow rows to size based on content */
-    gap: 1.5rem;
-}
-
-/* Glassmorphism Card Style */
-.chart-card {
-    background: rgba(30, 41, 59, 0.4);
-    /* Semi-transparent dark blue */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
     padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.welcome-text h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-text p {
+    color: var(--text-secondary);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Summary Cards Row */
+.summary-cards-section {
+    grid-column: span 12;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Main Content Area */
+.main-charts-section {
+    grid-column: span 8;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.side-panel-section {
+    grid-column: span 4;
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    gap: 1.5rem;
 }
 
-.chart-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
+/* Specific component containers */
+.chart-card {
+    background: var(--bg-card);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.chart-card h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+.chart-header {
     margin-bottom: 1.5rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
-/* Grid Spans */
-.full-width {
-    grid-column: 1 / -1;
+/* Transactions List */
+.transactions-section {
+    grid-column: span 12;
 }
 
-/* Size utility classes */
-.large {
-    min-height: 400px;
-}
-
-.medium {
-    min-height: 400px;
-}
-
-/* Responsive adjustments */
 @media (max-width: 1024px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
+    .main-charts-section {
+        grid-column: span 12;
     }
 
-    .chart-card {
-        padding: 1.25rem;
+    .side-panel-section {
+        grid-column: span 12;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     }
 }
 
-@media (max-width: 640px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-section h2 {
-        font-size: 2rem;
+@media (max-width: 768px) {
+    .dashboard-grid {
+        display: flex;
+        flex-direction: column;
     }
 }

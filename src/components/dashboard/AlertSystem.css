@@ -1,0 +1,104 @@
+.alert-system-container {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    /* Space below alerts before dashboard grid */
+}
+
+.alert-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.alert-icon-wrapper {
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    /* Align with title line-height */
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.alert-message {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.alert-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    margin-left: 0.5rem;
+}
+
+.alert-dismiss:hover {
+    opacity: 1;
+}
+
+/* Alert Types */
+
+/* Danger (Red) */
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.alert-danger .alert-icon-wrapper,
+.alert-danger .alert-dismiss {
+    color: #ef4444;
+}
+
+/* Warning (Orange/Amber) */
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
+.alert-warning .alert-icon-wrapper,
+.alert-warning .alert-dismiss {
+    color: #f59e0b;
+}
+
+/* Info (Blue) */
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.alert-info .alert-icon-wrapper,
+.alert-info .alert-dismiss {
+    color: #3b82f6;
+}
+
+/* Success (Green) */
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.alert-success .alert-icon-wrapper,
+.alert-success .alert-dismiss {
+    color: #10b981;
+}

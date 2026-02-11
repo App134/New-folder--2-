@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import NotificationPanel from '../dashboard/NotificationPanel';
 
 import './Header.css';
 import logo from '../../assets/logo.png';
@@ -9,12 +11,21 @@ import logo from '../../assets/logo.png';
 const Header = ({ onMenuClick }) => {
     // Get user from Auth Context
     const { currentUser, userProfile } = useAuth();
+    const { alerts, notifications } = useData(); // Use persistent notifications for count
     const navigate = useNavigate();
+    const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+
     const userName = userProfile?.username || currentUser?.displayName || currentUser?.email || 'User';
 
+    // Calculate unread persistent notifications
+    const unreadCount = notifications ? notifications.filter(n => !n.isRead).length : 0;
+
+    // Combine robust alert badge logic (either transient alerts OR persistent unread)
+    // For now, let's strictly use the Persistent Notifications for the badge
+    const badgeCount = unreadCount;
+
     return (
-        <header className="header">
-            {/* Mobile Menu Button - Hidden on desktop via CSS */}
+        <header className="header" style={{ position: 'relative' }}>
             {/* Mobile Menu Button - Hidden on desktop via CSS */}
             <div className="mobile-header-left">
                 <button className="menu-btn icon-btn" onClick={onMenuClick}>
@@ -33,10 +44,38 @@ const Header = ({ onMenuClick }) => {
 
             <div className="header-actions">
 
-                <button className="icon-btn">
+                <button
+                    className="icon-btn"
+                    style={{ position: 'relative' }}
+                    onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
+                >
                     <Bell size={20} />
-                    <span className="notification-badge"></span>
+                    {badgeCount > 0 && (
+                        <span className="notification-badge" style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            right: '-5px',
+                            background: '#ef4444',
+                            color: 'white',
+                            fontSize: '0.7rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            border: '2px solid var(--bg-primary)'
+                        }}>
+                            {badgeCount}
+                        </span>
+                    )}
                 </button>
+
+                <NotificationPanel
+                    isOpen={isNotificationPanelOpen}
+                    onClose={() => setIsNotificationPanelOpen(false)}
+                />
+
                 <div
                     className="user-profile"
                     onClick={() => navigate('/user')}

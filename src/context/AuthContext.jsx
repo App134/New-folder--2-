@@ -42,7 +42,9 @@ export const AuthProvider = ({ children }) => {
                 settings: {
                     preferences: {
                         theme: 'dark', // Default
-                        currency: '$'  // Default
+                        currency: '$',  // Default
+                        budget: 0,
+                        ccDueDate: 1 // Default to 1st of month
                     }
                 }
             }, { merge: true });
@@ -98,7 +100,9 @@ export const AuthProvider = ({ children }) => {
                     settings: {
                         preferences: {
                             theme: 'dark',
-                            currency: '$'
+                            currency: '$',
+                            budget: 0,
+                            ccDueDate: 1
                         }
                     }
                 }, { merge: true });

@@ -8,8 +8,13 @@ import {
     addDoc,
     doc,
     setDoc,
+
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    where,
+    getDocs,
+    deleteDoc,
+    writeBatch
 } from 'firebase/firestore';
 
 const DataContext = createContext();
@@ -28,6 +33,10 @@ export const DataProvider = ({ children }) => {
     const [theme, setTheme] = useState('dark');
     const [temporaryData, setTemporaryData] = useState([]);
     const [creditCardPayable, setCreditCardPayable] = useState(0);
+    const [budget, setBudget] = useState(0);
+    const [ccDueDate, setCCDueDate] = useState(1);
+    const [savingsGoals, setSavingsGoals] = useState([]);
+    const [alerts, setAlerts] = useState([]);
 
     const themes = {
         dark: {
@@ -266,6 +275,31 @@ export const DataProvider = ({ children }) => {
                 console.error("Error updating currency:", err);
             }
         }
+    }
+
+
+    const updateBudget = async (newBudget) => {
+        setBudget(newBudget);
+        if (currentUser) {
+            try {
+                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(settingsRef, { budget: Number(newBudget) }, { merge: true });
+            } catch (err) {
+                console.error("Error updating budget:", err);
+            }
+        }
+    };
+
+    const updateCCDueDate = async (newDate) => {
+        setCCDueDate(newDate);
+        if (currentUser) {
+            try {
+                const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
+                await setDoc(settingsRef, { ccDueDate: Number(newDate) }, { merge: true });
+            } catch (err) {
+                console.error("Error updating CC due date:", err);
+            }
+        }
     };
 
     // Load User Settings
@@ -286,6 +320,8 @@ export const DataProvider = ({ children }) => {
                     }
                 }
                 if (data.currency) setCurrency(data.currency);
+                if (data.budget !== undefined) setBudget(data.budget);
+                if (data.ccDueDate !== undefined) setCCDueDate(data.ccDueDate);
             }
         });
 
@@ -413,6 +449,283 @@ export const DataProvider = ({ children }) => {
         await Promise.all(promises);
     };
 
+    const addGoal = async (goalData) => {
+        if (!currentUser) return;
+        try {
+            await addDoc(collection(db, 'users', currentUser.uid, 'goals'), {
+                ...goalData,
+                createdAt: new Date().toISOString(),
+                currentAmount: 0 // Start with 0
+            });
+        } catch (err) {
+            console.error("Error adding goal:", err);
+            throw err;
+        }
+    };
+
+    const deleteGoal = async (goalId) => {
+        if (!currentUser) return;
+        try {
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'goals', goalId));
+        } catch (err) {
+            console.error("Error deleting goal:", err);
+            throw err;
+        }
+    };
+
+    const updateGoalAmount = async (goalId, newAmount) => {
+        if (!currentUser) return;
+        try {
+            await setDoc(doc(db, 'users', currentUser.uid, 'goals', goalId), {
+                currentAmount: Number(newAmount)
+            }, { merge: true });
+        } catch (err) {
+            console.error("Error updating goal amount:", err);
+            throw err;
+        }
+    };
+
+    // Listen to Goals
+    useEffect(() => {
+        if (!currentUser) {
+            setSavingsGoals([]);
+            return;
+        }
+        const q = query(collection(db, 'users', currentUser.uid, 'goals'), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setSavingsGoals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+        return () => unsubscribe();
+    }, [currentUser]);
+
+    const [notifications, setNotifications] = useState([]);
+
+    // --- Notification Logic ---
+
+    // Helper to add a persistent notification with deduplication
+    const addNotification = async (notificationData) => {
+        if (!currentUser) return;
+        const { dateKey, type, title, message } = notificationData;
+
+        // Deduplication check
+        const notificationsRef = collection(db, 'users', currentUser.uid, 'notifications');
+        const q = query(notificationsRef, where('dateKey', '==', dateKey));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            // Notification for this event/period already exists
+            return;
+        }
+
+        try {
+            await addDoc(notificationsRef, {
+                type,
+                title,
+                message,
+                dateKey,
+                isRead: false,
+                timestamp: serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Error adding notification:", err);
+        }
+    };
+
+    const markAsRead = async (id) => {
+        if (!currentUser) return;
+        try {
+            const notifRef = doc(db, 'users', currentUser.uid, 'notifications', id);
+            await setDoc(notifRef, { isRead: true }, { merge: true });
+        } catch (err) {
+            console.error("Error marking notification as read:", err);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        if (!currentUser) return;
+        const batch = writeBatch(db);
+        notifications.forEach(notif => {
+            if (!notif.isRead) {
+                const ref = doc(db, 'users', currentUser.uid, 'notifications', notif.id);
+                batch.update(ref, { isRead: true });
+            }
+        });
+        try {
+            await batch.commit();
+        } catch (err) {
+            console.error("Error marking all as read:", err);
+        }
+    };
+
+    const clearNotification = async (id) => {
+        if (!currentUser) return;
+        try {
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'notifications', id));
+        } catch (err) {
+            console.error("Error clearing notification:", err);
+        }
+    };
+
+    const clearAllNotifications = async () => {
+        if (!currentUser) return;
+        const batch = writeBatch(db);
+        notifications.forEach(notif => {
+            const ref = doc(db, 'users', currentUser.uid, 'notifications', notif.id);
+            batch.delete(ref);
+        });
+        try {
+            await batch.commit();
+        } catch (err) {
+            console.error("Error clearing all notifications:", err);
+        }
+    };
+
+    // Listen to Notifications
+    useEffect(() => {
+        if (!currentUser) {
+            setNotifications([]);
+            return;
+        }
+        const q = query(
+            collection(db, 'users', currentUser.uid, 'notifications'),
+            orderBy('timestamp', 'desc')
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+        return () => unsubscribe();
+    }, [currentUser]);
+
+    // Calculate Alerts & Generate Notifications
+    useEffect(() => {
+        const newAlerts = [];
+        const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+        const currentYear = new Date().getFullYear();
+        const monthKey = `${currentMonth}-${currentYear}`;
+
+        // 1. Budget Alert
+        const currentMonthRevenue = revenueData.find(item => item.name === currentMonth);
+        const currentExpense = currentMonthRevenue ? currentMonthRevenue.expense : 0;
+
+        if (budget > 0) {
+            const budgetRatio = currentExpense / budget;
+            if (budgetRatio >= 1) {
+                newAlerts.push({
+                    id: 'budget-exceeded',
+                    type: 'danger',
+                    title: 'Budget Exceeded',
+                    message: `You have exceeded your monthly budget.`,
+                });
+                // Persistent Notification
+                addNotification({
+                    dateKey: `budget-exceeded-${monthKey}`,
+                    type: 'budget',
+                    title: 'Budget Exceeded',
+                    message: `You have exceeded your budget of ${currency}${budget} for ${currentMonth}.`
+                });
+            } else if (budgetRatio >= 0.8) {
+                newAlerts.push({
+                    id: 'budget-warning',
+                    type: 'warning',
+                    title: 'Approaching Budget Limit',
+                    message: `You have used ${Math.round(budgetRatio * 100)}% of your monthly budget.`,
+                });
+                // Persistent Notification (Only once when crossing 80%)
+                addNotification({
+                    dateKey: `budget-warning-${monthKey}`,
+                    type: 'budget',
+                    title: 'Budget Warning',
+                    message: `You used 80% of your budget for ${currentMonth}.`
+                });
+            }
+        }
+
+        // 2. Savings Alert
+        const currentIncome = currentMonthRevenue ? currentMonthRevenue.income : 0;
+        if (currentIncome > 0) {
+            if (currentExpense > currentIncome * 0.9) {
+                newAlerts.push({
+                    id: 'low-savings',
+                    type: 'warning',
+                    title: 'Low Savings Rate',
+                    message: `Expenses are ${Math.round((currentExpense / currentIncome) * 100)}% of income.`,
+                });
+                addNotification({
+                    dateKey: `low-savings-${monthKey}`,
+                    type: 'savings',
+                    title: 'Low Savings',
+                    message: `Your savings rate is critically low for ${currentMonth}.`
+                });
+            }
+        }
+
+        // 3. High Category Spending
+        if (currentExpense > 0 && expenseData.length > 0) {
+            expenseData.forEach(cat => {
+                if ((cat.value / currentExpense) > 0.40) {
+                    newAlerts.push({
+                        id: `high-cat-${cat.name}`,
+                        type: 'info',
+                        title: `High Spending in ${cat.name}`,
+                        message: `${cat.name} is ${Math.round((cat.value / currentExpense) * 100)}% of total expenses.`,
+                    });
+                    // Only notify if significant amount ($100+) to avoid noise on small budgets
+                    if (cat.value > 100) {
+                        addNotification({
+                            dateKey: `high-cat-${cat.name}-${monthKey}`,
+                            type: 'info',
+                            title: `High Spending: ${cat.name}`,
+                            message: `You spent ${currency}${cat.value} on ${cat.name} this month.`
+                        });
+                    }
+                }
+            });
+        }
+
+        // 4. Credit Card Bill Due
+        if (creditCardPayable > 0) {
+            const today = new Date();
+            const dueDay = ccDueDate;
+            const currentDay = today.getDate(); // 1-31
+
+            // Check if we are in the same month as the due calculation or if it's generally due
+            // For simplicity, we create a key based on TODAY's date string to allow re-notification if still unpaid next day?
+            // Or just once per month cycle? Let's do once per month cycle "cc-due-Month-Year".
+
+            let daysDiff = dueDay - currentDay;
+
+            if (daysDiff < 0) {
+                newAlerts.push({
+                    id: 'cc-overdue',
+                    type: 'danger',
+                    title: 'Credit Card Bill Overdue',
+                    message: `Bill was due on day ${dueDay}. Pay immediately.`,
+                });
+                addNotification({
+                    dateKey: `cc-overdue-${monthKey}`,
+                    type: 'reminder',
+                    title: 'Bill Overdue',
+                    message: `Your credit card bill was due on the ${dueDay}th!`
+                });
+            } else if (daysDiff <= 3) { // Notify only if very close (3 days)
+                newAlerts.push({
+                    id: 'cc-due-soon',
+                    type: 'warning',
+                    title: 'Credit Card Bill Due Soon',
+                    message: `Bill due in ${daysDiff === 0 ? 'today' : daysDiff + ' days'}.`,
+                });
+                addNotification({
+                    dateKey: `cc-due-soon-${monthKey}`,
+                    type: 'reminder',
+                    title: 'Bill Due Soon',
+                    message: `Your credit card bill is due in ${daysDiff === 0 ? 'today' : daysDiff + ' days'}.`
+                });
+            }
+        }
+
+        setAlerts(newAlerts);
+    }, [revenueData, expenseData, budget, creditCardPayable, ccDueDate]);
+
     return (
         <DataContext.Provider value={{
             revenueData,
@@ -428,11 +741,26 @@ export const DataProvider = ({ children }) => {
             importData,
             currency,
             updateCurrency,
+            budget,
+            updateBudget,
+            ccDueDate,
+            updateCCDueDate,
+            savingsGoals,
+            addGoal,
+            deleteGoal,
+            updateGoalAmount,
             theme,
             updateTheme,
-            updateTheme,
+
+
             refreshData,
-            setTemporaryData
+            setTemporaryData,
+            alerts,
+            notifications,
+            markAsRead,
+            markAllAsRead,
+            clearNotification,
+            clearAllNotifications
         }}>
             {children}
         </DataContext.Provider>
