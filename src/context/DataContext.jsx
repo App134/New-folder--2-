@@ -128,14 +128,15 @@ export const DataProvider = ({ children }) => {
                     ...baseTransaction,
                     type: 'credit',
                     amount: inc,
-                    description: item.description || 'Revenue/Income',
+                    description: item.category || item.description || 'Revenue/Income',
                     category: 'Income'
                 });
             }
             if (exp > 0) {
+                const isSaving = item.type === 'Saving' || item.type === 'Investment';
                 flatList.push({
                     ...baseTransaction,
-                    type: 'debit',
+                    type: isSaving ? 'Saving' : 'debit',
                     amount: exp,
                     description: item.category || item.description || 'Expense',
                     category: item.category || 'Expense'
@@ -202,7 +203,7 @@ export const DataProvider = ({ children }) => {
 
         const processedTrend = aggregatedList.map(item => ({
             name: item.month,
-            savings: item.income - item.expense // Auto Savings Calculation: Income - Expense
+            savings: (item.income - item.expense) + (item.savings || 0) // Auto Savings (Surplus) + Manual Investments
         }));
         if (processedTrend.length > 0) setTrendData(processedTrend);
 
@@ -380,21 +381,34 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const addExpenseData = async (month, description, value, date, paymentMethod = 'Debit Card', source = '') => {
+    const addExpenseData = async (month, description, value, date, paymentMethod = 'Debit Card', source = '', type = 'expense') => {
         if (!currentUser) throw new Error("User not authenticated");
         const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
         const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
 
         try {
-            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
+            const dataToSave = {
                 month: derivedMonth,
                 category: description,
-                expense: Number(value),
+                description: description, // Explicitly save description
                 createdAt: entryDate,
                 paymentMethod,
-                source, // specific source if applicable (e.g. 'Emergency Fund')
-                type: 'expense'
-            });
+                source,
+                type
+            };
+
+            if (type === 'credit') {
+                dataToSave.income = Number(value);
+                dataToSave.expense = 0;
+            } else {
+                dataToSave.income = 0;
+                dataToSave.expense = Number(value);
+                if (type === 'Saving') {
+                    dataToSave.savings = Number(value);
+                }
+            }
+
+            await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), dataToSave);
         } catch (err) {
             console.error("Error adding expense:", err);
             throw err;

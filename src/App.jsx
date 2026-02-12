@@ -10,6 +10,10 @@ import DataEntryPage from './pages/DataEntryPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import UserPage from './pages/UserPage';
 import GoogleSheetPage from './pages/GoogleSheetPage';
+
+import MobileLayout from './components/layout/MobileLayout';
+import PhonePeHome from './pages/phonepe/PhonePeHome';
+import PhonePeWealth from './pages/phonepe/PhonePeWealth';
 import { DataProvider } from './context/DataContext';
 import { AuthProvider } from './context/AuthContext';
 
@@ -34,7 +38,9 @@ function AnimatedRoutes() {
           path="/data-entry"
           element={
             <ProtectedRoute>
-              <DataEntryPage />
+              <DashboardLayout>
+                <DataEntryPage />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -42,7 +48,9 @@ function AnimatedRoutes() {
           path="/user"
           element={
             <ProtectedRoute>
-              <UserPage />
+              <DashboardLayout>
+                <UserPage />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -66,6 +74,15 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
+
+
+        {/* PhonePe Simulation App */}
+        <Route path="/phonepe" element={<ProtectedRoute><MobileLayout /></ProtectedRoute>}>
+          <Route index element={<PhonePeHome />} />
+          <Route path="wealth" element={<PhonePeWealth />} />
+          <Route path="history" element={<div className="p-4 text-center text-slate-500">Transaction History (Coming Soon)</div>} />
+        </Route>
+
         {/* Redirect any unknown routes to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import SummaryCard from '../components/dashboard/SummaryCard';
 import RevenueChart from '../components/dashboard/RevenueChart';
@@ -6,15 +6,11 @@ import ExpensePieChart from '../components/dashboard/ExpensePieChart';
 import ExpenseBarChart from '../components/dashboard/ExpenseBarChart';
 import TrendLineChart from '../components/dashboard/TrendLineChart';
 import BudgetCard from '../components/dashboard/BudgetCard';
-import SavingsGoals from '../components/dashboard/SavingsGoals';
 import BillReminder from '../components/dashboard/BillReminder';
-
 import FinanceAI from '../components/dashboard/FinanceAI';
-
-import { DollarSign, CreditCard, PiggyBank, TrendingUp } from 'lucide-react';
+import { DollarSign, CreditCard, PiggyBank, TrendingUp, Calendar, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import './Dashboard.css';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -39,8 +35,9 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-    const { revenueData, trendData, currency, allTransactions, creditCardPayable } = useData();
+    const { revenueData, trendData, currency, allTransactions } = useData();
     const { currentUser, userProfile } = useAuth();
+
 
     const userName = userProfile?.username || currentUser?.displayName || 'User';
 
@@ -78,142 +75,145 @@ const Dashboard = () => {
 
     return (
         <motion.div
-            className="dashboard-container"
+            className="p-6 lg:p-10 space-y-8 bg-background min-h-screen text-primary-foreground"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
         >
-            <motion.div className="dashboard-header" variants={itemVariants}>
-                <div className="welcome-text">
-                    <h1>Welcome back, {userName}</h1>
-                    <p>Here's your financial overview for today.</p>
+            {/* Header */}
+            <motion.div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4" variants={itemVariants}>
+                <div>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+                    <p className="text-muted mt-1">Welcome back, {userName}. Here's your financial overview.</p>
                 </div>
+
             </motion.div>
 
+            {/* Summary Cards */}
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={itemVariants}>
+                <SummaryCard
+                    title="Total Income"
+                    amount={`${currency}${totalIncome.toLocaleString()}`}
+                    change={incomeTrend.change}
+                    isPositive={incomeTrend.isPositive}
+                    icon={DollarSign}
+                    color="blue"
+                />
+                <SummaryCard
+                    title="Total Expenses"
+                    amount={`${currency}${totalExpenses.toLocaleString()}`}
+                    change={expenseTrend.change}
+                    isPositive={expenseTrend.isPositive}
+                    icon={CreditCard}
+                    color="red"
+                />
+                <SummaryCard
+                    title="Total Savings"
+                    amount={`${currency}${totalSavings.toLocaleString()}`}
+                    change={savingsTrend.change}
+                    isPositive={savingsTrend.isPositive}
+                    icon={PiggyBank}
+                    color="green"
+                />
+                <SummaryCard
+                    title="Net Worth Trend"
+                    amount={`${currency}${(totalIncome - totalExpenses).toLocaleString()}`}
+                    change="Overall"
+                    isPositive={true}
+                    icon={TrendingUp}
+                    color="purple"
+                />
+            </motion.div>
 
-
-            <div className="dashboard-grid">
-                {/* Summary Cards Row */}
-                <motion.div className="summary-cards-section" variants={itemVariants}>
-                    <SummaryCard
-                        title="Total Income"
-                        amount={`${currency}${totalIncome.toLocaleString()}`}
-                        change={incomeTrend.change}
-                        isPositive={incomeTrend.isPositive}
-                        icon={DollarSign}
-                        color="blue"
-                    />
-                    <SummaryCard
-                        title="Total Expenses"
-                        amount={`${currency}${totalExpenses.toLocaleString()}`}
-                        change={expenseTrend.change}
-                        isPositive={expenseTrend.isPositive}
-                        icon={CreditCard}
-                        color="red"
-                    />
-                    <SummaryCard
-                        title="Total Savings"
-                        amount={`${currency}${totalSavings.toLocaleString()}`}
-                        change={savingsTrend.change}
-                        isPositive={savingsTrend.isPositive}
-                        icon={PiggyBank}
-                        color="green"
-                    />
-                    <SummaryCard
-                        title="Net Worth Trend"
-                        amount={`${currency}${(totalIncome - totalExpenses).toLocaleString()}`}
-                        change="Overall"
-                        isPositive={true}
-                        icon={TrendingUp}
-                        color="purple"
-                    />
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                {/* Main Revenue Chart */}
+                <motion.div className="lg:col-span-2 glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-6 text-lg font-bold text-white flex justify-between items-center">
+                        <span>Revenue & Expenses</span>
+                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted hover:text-white transition-colors">
+                            <Calendar size={20} />
+                        </button>
+                    </div>
+                    <RevenueChart />
                 </motion.div>
 
-                {/* Main Charts Section */}
-                <div className="main-charts-section">
-                    <motion.div className="chart-card" variants={itemVariants}>
-                        <div className="chart-header">Revenue & Expenses</div>
-                        <RevenueChart />
-                    </motion.div>
+                {/* Expense Breakdown */}
+                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg flex flex-col" variants={itemVariants}>
+                    <div className="mb-6 text-lg font-bold text-white">Expense Distribution</div>
+                    <ExpensePieChart />
+                </motion.div>
+            </div>
 
-                    <motion.div className="chart-card" variants={itemVariants}>
-                        <div className="chart-header">Category Breakdown (Bar)</div>
-                        <ExpenseBarChart />
-                    </motion.div>
+            {/* Secondary Charts & Widgets */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-6 text-lg font-bold text-white">Category Breakdown</div>
+                    <ExpenseBarChart />
+                </motion.div>
 
-                    <motion.div className="chart-card" variants={itemVariants}>
-                        <div className="chart-header">Financial Growth</div>
-                        <TrendLineChart />
-                    </motion.div>
-                </div>
+                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-6 text-lg font-bold text-white">Financial Growth</div>
+                    <TrendLineChart />
+                </motion.div>
 
-                {/* Side Panel Section */}
-                <div className="side-panel-section">
+                <div className="flex flex-col gap-6">
                     <motion.div variants={itemVariants}>
                         <BillReminder />
                     </motion.div>
-
                     <motion.div variants={itemVariants}>
                         <BudgetCard />
                     </motion.div>
-
-                    <motion.div variants={itemVariants}>
-                        <SavingsGoals />
-                    </motion.div>
-
-                    <motion.div className="chart-card" variants={itemVariants}>
-                        <div className="chart-header">Expense Distribution (Pie)</div>
-                        <ExpensePieChart />
-                    </motion.div>
                 </div>
-
-                {/* Recent Transactions Section */}
-                <motion.div className="chart-card transactions-section" variants={itemVariants}>
-                    <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Recent Transactions</span>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Last 5 entries</span>
-                    </div>
-                    <div style={{ width: '100%', overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Date</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Description</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Category</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {allTransactions && allTransactions.slice(0, 5).map((txn, index) => (
-                                    <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '0.75rem' }}>{new Date(txn.date).toLocaleDateString()}</td>
-                                        <td style={{ padding: '0.75rem' }}>{txn.description}</td>
-                                        <td style={{ padding: '0.75rem' }}>
-                                            <span style={{
-                                                padding: '0.2rem 0.5rem',
-                                                borderRadius: '4px',
-                                                background: txn.type === 'credit' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                color: txn.type === 'credit' ? '#10b981' : '#ef4444',
-                                                fontSize: '0.8rem'
-                                            }}>
-                                                {txn.category || (txn.type === 'credit' ? 'Income' : 'Expense')}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '500', color: txn.type === 'credit' ? '#10b981' : 'var(--text-primary)' }}>
-                                            {currency}{txn.amount.toLocaleString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {(!allTransactions || allTransactions.length === 0) && (
-                                    <tr>
-                                        <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No transactions found.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </motion.div>
             </div>
+
+            {/* Recent Transactions Section */}
+            <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg col-span-12" variants={itemVariants}>
+                <div className="mb-6 text-lg font-bold text-white flex justify-between">
+                    <span>Recent Transactions</span>
+                    <span className="text-sm text-muted">Last 5 entries</span>
+                </div>
+                <div className="w-full overflow-x-auto">
+                    <table className="w-full border-collapse text-sm text-slate-200">
+                        <thead>
+                            <tr className="border-b border-white/10">
+                                <th className="p-3 text-left text-muted font-medium">Date</th>
+                                <th className="p-3 text-left text-muted font-medium">Description</th>
+                                <th className="p-3 text-left text-muted font-medium">Category</th>
+                                <th className="p-3 text-right text-muted font-medium">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {allTransactions && allTransactions.slice(0, 5).map((txn, index) => (
+                                <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                    <td className="p-3 text-primary-foreground">{new Date(txn.date).toLocaleDateString()}</td>
+                                    <td className="p-3 text-primary-foreground font-medium">{txn.description}</td>
+                                    <td className="p-3">
+                                        <span className={`px-2 py-1 rounded-md text-xs font-bold ${txn.type === 'credit' ? 'bg-success/10 text-success' :
+                                            (txn.type === 'Investment' || txn.type === 'Saving') ? 'bg-warning/10 text-warning' :
+                                                'bg-danger/10 text-danger'
+                                            }`}>
+                                            {txn.category || (txn.type === 'credit' ? 'Income' : (txn.type === 'Investment' || txn.type === 'Saving') ? 'Saving' : 'Expense')}
+                                        </span>
+                                    </td>
+                                    <td className={`p-3 text-right font-bold ${txn.type === 'credit' ? 'text-success' :
+                                        (txn.type === 'Investment' || txn.type === 'Saving') ? 'text-warning' :
+                                            'text-primary-foreground'
+                                        }`}>
+                                        {txn.type === 'credit' ? '+' : '-'} {currency}{txn.amount.toLocaleString()}
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!allTransactions || allTransactions.length === 0) && (
+                                <tr>
+                                    <td colSpan="4" className="p-8 text-center text-muted">No transactions found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </motion.div>
+
             {/* Finance AI Chatbot */}
             <FinanceAI />
         </motion.div>

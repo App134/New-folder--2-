@@ -1,32 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
 
 :root {
-  /* Dark Mode Palette */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: #1e293b;
-  
+  /* Midnight Innovation Theme Palette */
+
+  /* Backgrounds: Deep Navy / Midnight */
+  --bg-primary: #020617;
+  /* Slate 950 */
+  --bg-secondary: #0f172a;
+  /* Slate 900 */
+  --bg-card: rgba(15, 23, 42, 0.6);
+  /* Glassy Slate 900 */
+
+  /* Primary Brand: Electric Cyan */
+  --primary: #06b6d4;
+  /* Cyan 500 */
+  --primary-foreground: #ffffff;
+
+  /* Secondary Brand: Royal Blue */
+  --secondary: #3b82f6;
+  /* Blue 500 */
+  --secondary-foreground: #ffffff;
+
+  /* Accent: Electric Purple/Pink */
+  --accent: #8b5cf6;
+  /* Violet 500 */
+  --accent-foreground: #ffffff;
+
+  /* Text Colors */
   --text-primary: #f8fafc;
+  /* Slate 50 */
   --text-secondary: #94a3b8;
+  /* Slate 400 */
   --text-muted: #64748b;
+  /* Slate 500 */
 
-  --accent-primary: #3b82f6; /* Blue */
-  --accent-secondary: #10b981; /* Emerald */
-  --accent-tertiary: #8b5cf6; /* Violet */
-  --accent-warn: #f59e0b; /* Amber */
-  --accent-danger: #ef4444; /* Red */
+  /* State Colors */
+  --success: #10b981;
+  /* Emerald 500 */
+  --danger: #ef4444;
+  /* Red 500 */
+  --warning: #f59e0b;
+  /* Amber 500 */
+  --info: #0ea5e9;
+  /* Sky 500 */
 
-  --border-color: #334155;
-  
+  --border-color: rgba(148, 163, 184, 0.1);
+
   --font-family: 'Outfit', sans-serif;
-  
   --transition-speed: 0.3s;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {
@@ -35,42 +56,46 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  /* Add subtle background pattern or gradient if desired */
+  background-image:
+    radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-ul {
-  list-style: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-/* Scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary); 
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-color); 
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted); 
+  width: 6px;
 }
 
-/* Utilities */
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.grid { display: grid; }
-.hidden { display: none; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+}
+
+.glass-card-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.15);
+  transform: translateY(-2px);
+}

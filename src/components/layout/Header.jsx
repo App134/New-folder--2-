@@ -32,7 +32,7 @@ const Header = ({ onMenuClick }) => {
                     <Menu size={24} />
                 </button>
                 <div className="mobile-logo-container">
-                    <img src={logo} alt="FinanceFlow" className="mobile-logo" />
+                    <img src={logo} alt="FinanceFlow" className="mobile-logo w-8 h-8 object-contain mix-blend-screen" style={{ borderRadius: '50%' }} />
                     <span className="mobile-logo-text">FinanceFlow</span>
                 </div>
             </div>

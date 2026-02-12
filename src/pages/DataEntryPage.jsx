@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import './DataEntryPage.css';
-import Footer from '../components/layout/Footer';
-import BackButton from '../components/common/BackButton';
-import { Wallet, TrendingUp, CreditCard, Save } from 'lucide-react';
+import { Wallet, TrendingUp, CreditCard, Save, Calendar, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const DataEntryPage = () => {
     const { addRevenueData, addExpenseData, repayCreditCard, currency } = useData();
@@ -87,233 +85,246 @@ const DataEntryPage = () => {
         }
     };
 
-    const formatCurrencyInput = (
-        <span style={{
-            position: 'absolute',
-            left: '1rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--text-secondary)',
-            fontWeight: 'bold'
-        }}>
-            {currency}
-        </span>
-    );
-
     return (
-        <div className="data-entry-container">
-            {/* Background Shapes */}
-            <div className="shape shape-1"></div>
-            <div className="shape shape-2"></div>
-            <div className="shape shape-3"></div>
+        <div className="p-6 lg:p-10 min-h-screen bg-background text-primary-foreground font-sans">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white tracking-tight">Financial Data Entry</h1>
+                <p className="text-muted text-sm mt-1">Track your flow. Manage your growth.</p>
+            </div>
 
-            <BackButton />
+            {/* Tab Navigation */}
+            <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
+                {['expense', 'revenue', 'repayment'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-bold text-sm uppercase tracking-wide
+                            ${activeTab === tab
+                                ? 'bg-primary/20 text-primary border border-primary/50 shadow-neon'
+                                : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white border border-white/5'
+                            }`}
+                    >
+                        {tab === 'expense' && <Wallet size={18} />}
+                        {tab === 'revenue' && <TrendingUp size={18} />}
+                        {tab === 'repayment' && <CreditCard size={18} />}
+                        {tab}
+                    </button>
+                ))}
+            </div>
 
-            <div className="data-entry-content-wrapper">
-                <div className="data-entry-header">
-                    <h1>Financial Data Entry</h1>
-                    <p>Track your flow. Manage your growth.</p>
+            {/* Form Content */}
+            <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="glass-panel p-8 rounded-[32px] max-w-2xl border border-white/10 shadow-lg relative overflow-hidden"
+            >
+                {/* Decorative Glow */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none"></div>
+
+                <div className="flex items-center gap-3 mb-8">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center 
+                        ${activeTab === 'expense' ? 'bg-danger/10 text-danger shadow-[0_0_15px_-5px_var(--danger)]' :
+                            activeTab === 'revenue' ? 'bg-success/10 text-success shadow-[0_0_15px_-5px_var(--success)]' :
+                                'bg-primary/10 text-primary shadow-neon'}`}>
+                        {activeTab === 'expense' && <Wallet size={24} />}
+                        {activeTab === 'revenue' && <TrendingUp size={24} />}
+                        {activeTab === 'repayment' && <CreditCard size={24} />}
+                    </div>
+                    <h2 className="text-2xl font-bold text-white capitalize">Record {activeTab}</h2>
                 </div>
 
-                <div className="tabs-container">
-                    <button
-                        className={`tab-button ${activeTab === 'expense' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('expense')}
-                    >
-                        <Wallet size={18} />
-                        Expense
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'revenue' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('revenue')}
-                    >
-                        <TrendingUp size={18} />
-                        Revenue
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'repayment' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('repayment')}
-                    >
-                        <CreditCard size={18} />
-                        Repayment
-                    </button>
-                </div>
+                <AnimatePresence>
+                    {successMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="bg-success/10 border border-success/20 text-success px-4 py-3 rounded-xl mb-6 flex items-center gap-3"
+                        >
+                            <CheckCircle size={20} />
+                            {successMessage}
+                        </motion.div>
+                    )}
+                    {errorMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl mb-6 flex items-center gap-3"
+                        >
+                            <AlertTriangle size={20} />
+                            {errorMessage}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                {/* Expense Form */}
                 {activeTab === 'expense' && (
-                    <div className="form-card">
-                        <div className="form-title">
-                            <Wallet size={24} className="form-icon" style={{ color: '#ef4444' }} />
-                            New Expense
+                    <form onSubmit={handleExpenseSubmit} className="space-y-6">
+                        <div>
+                            <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Description</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Groceries, Rent..."
+                                value={expenseDescription}
+                                onChange={(e) => setExpenseDescription(e.target.value)}
+                                required
+                                autoFocus
+                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                            />
                         </div>
-                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
-                        <form className="form-content" onSubmit={handleExpenseSubmit}>
-                            <div className="input-group">
-                                <label>Description</label>
-                                <div className="input-wrapper">
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Groceries, Rent..."
-                                        value={expenseDescription}
-                                        onChange={(e) => setExpenseDescription(e.target.value)}
-                                        required
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-                            <div className="row-group">
-                                <div className="input-group">
-                                    <label>Date</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Date</label>
+                                <div className="relative">
+                                    <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
                                     <input
                                         type="date"
                                         value={expenseDate}
                                         onChange={(e) => setExpenseDate(e.target.value)}
-                                        className="styled-input"
                                         required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
-                                <div className="input-group">
-                                    <label>Amount</label>
-                                    <div className="input-wrapper">
-                                        {formatCurrencyInput}
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={expenseAmount}
-                                            onChange={(e) => setExpenseAmount(e.target.value)}
-                                            required
-                                            style={{ paddingLeft: '2.5rem' }}
-                                        />
-                                    </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Amount</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-bold text-lg">{currency}</span>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={expenseAmount}
+                                        onChange={(e) => setExpenseAmount(e.target.value)}
+                                        required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                    />
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="input-group">
-                                <label>Payment Method</label>
-                                <select
-                                    value={paymentMethod}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    className="styled-select"
-                                >
-                                    <option value="Debit Card">Debit Card</option>
-                                    <option value="Credit Card">Credit Card</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="From Savings">From Savings</option>
-                                </select>
+                        <div>
+                            <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Payment Method</label>
+                            <select
+                                value={paymentMethod}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                            >
+                                <option value="Debit Card" className="bg-slate-900">Debit Card</option>
+                                <option value="Credit Card" className="bg-slate-900">Credit Card</option>
+                                <option value="Cash" className="bg-slate-900">Cash</option>
+                                <option value="From Savings" className="bg-slate-900">From Savings</option>
+                            </select>
+                        </div>
+
+                        {paymentMethod === 'From Savings' && (
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Source Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Emergency Fund"
+                                    value={savingsSource}
+                                    onChange={(e) => setSavingsSource(e.target.value)}
+                                    required
+                                    className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                />
                             </div>
+                        )}
 
-                            {paymentMethod === 'From Savings' && (
-                                <div className="input-group">
-                                    <label>Source Name</label>
-                                    <div className="input-wrapper">
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Emergency Fund"
-                                            value={savingsSource}
-                                            onChange={(e) => setSavingsSource(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            <button type="submit" className="submit-btn expense-btn" disabled={isSubmitting}>
-                                {isSubmitting ? 'Saving...' : 'Add Expense'}
-                            </button>
-                        </form>
-                    </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-red-600 to-rose-500 hover:shadow-[0_0_20px_var(--danger)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                        >
+                            {isSubmitting ? 'Saving...' : 'Add Expense'}
+                        </button>
+                    </form>
                 )}
 
-                {/* Revenue Form */}
                 {activeTab === 'revenue' && (
-                    <div className="form-card">
-                        <div className="form-title">
-                            <TrendingUp size={24} className="form-icon" style={{ color: '#10b981' }} />
-                            Record Revenue
-                        </div>
-                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
-                        <form className="form-content" onSubmit={handleRevenueSubmit}>
-                            <div className="row-group">
-                                <div className="input-group">
-                                    <label>Date</label>
+                    <form onSubmit={handleRevenueSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Date</label>
+                                <div className="relative">
+                                    <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
                                     <input
                                         type="date"
                                         value={revenueDate}
                                         onChange={(e) => setRevenueDate(e.target.value)}
-                                        className="styled-input"
                                         required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
-                                <div className="input-group">
-                                    <label>Income Amount</label>
-                                    <div className="input-wrapper">
-                                        {formatCurrencyInput}
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={revenueIncome}
-                                            onChange={(e) => setRevenueIncome(e.target.value)}
-                                            required
-                                            style={{ paddingLeft: '2.5rem' }}
-                                        />
-                                    </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Income Amount</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-bold text-lg">{currency}</span>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={revenueIncome}
+                                        onChange={(e) => setRevenueIncome(e.target.value)}
+                                        required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                    />
                                 </div>
                             </div>
-                            <button type="submit" className="submit-btn revenue-btn" disabled={isSubmitting}>
-                                {isSubmitting ? 'Saving...' : 'Add Revenue'}
-                            </button>
-                        </form>
-                    </div>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-[0_0_20px_var(--success)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                        >
+                            {isSubmitting ? 'Saving...' : 'Add Revenue'}
+                        </button>
+                    </form>
                 )}
 
-                {/* Repayment Form */}
                 {activeTab === 'repayment' && (
-                    <div className="form-card">
-                        <div className="form-title">
-                            <CreditCard size={24} className="form-icon" style={{ color: '#8b5cf6' }} />
-                            Card Repayment
-                        </div>
-                        {successMessage && <div className="success-message">✅ {successMessage}</div>}
-                        {errorMessage && <div className="error-message">⚠️ {errorMessage}</div>}
-                        <form className="form-content" onSubmit={handleRepaymentSubmit}>
-                            <div className="row-group">
-                                <div className="input-group">
-                                    <label>Date</label>
+                    <form onSubmit={handleRepaymentSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Date</label>
+                                <div className="relative">
+                                    <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
                                     <input
                                         type="date"
                                         value={repaymentDate}
                                         onChange={(e) => setRepaymentDate(e.target.value)}
-                                        className="styled-input"
                                         required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
-                                <div className="input-group">
-                                    <label>Repayment Amount</label>
-                                    <div className="input-wrapper">
-                                        {formatCurrencyInput}
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={repaymentAmount}
-                                            onChange={(e) => setRepaymentAmount(e.target.value)}
-                                            required
-                                            style={{ paddingLeft: '2.5rem' }}
-                                        />
-                                    </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted font-bold uppercase tracking-wider block mb-2">Repayment Amount</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-bold text-lg">{currency}</span>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={repaymentAmount}
+                                        onChange={(e) => setRepaymentAmount(e.target.value)}
+                                        required
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                    />
                                 </div>
                             </div>
-                            <button type="submit" className="submit-btn repayment-btn" disabled={isSubmitting}>
-                                {isSubmitting ? 'Processing...' : 'Record Payment'}
-                            </button>
-                        </form>
-                    </div>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:shadow-[0_0_20px_var(--primary)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                        >
+                            {isSubmitting ? 'Processing...' : 'Record Payment'}
+                        </button>
+                    </form>
                 )}
-
-                <div className="footer-section">
-                    <Footer />
-                </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
