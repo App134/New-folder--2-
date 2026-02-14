@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { Wallet, TrendingUp, CreditCard, Save, Calendar, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Wallet, TrendingUp, CreditCard, Save, Calendar, DollarSign, CheckCircle, AlertTriangle, Wrench } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CleanInvalidImports from '../components/utils/CleanInvalidImports';
 
 const DataEntryPage = () => {
     const { addRevenueData, addExpenseData, repayCreditCard, currency } = useData();
@@ -95,7 +96,7 @@ const DataEntryPage = () => {
 
             {/* Tab Navigation */}
             <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
-                {['expense', 'revenue', 'repayment'].map((tab) => (
+                {['expense', 'revenue', 'repayment', 'cleanup'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -108,6 +109,7 @@ const DataEntryPage = () => {
                         {tab === 'expense' && <Wallet size={18} />}
                         {tab === 'revenue' && <TrendingUp size={18} />}
                         {tab === 'repayment' && <CreditCard size={18} />}
+                        {tab === 'cleanup' && <Wrench size={18} />}
                         {tab}
                     </button>
                 ))}
@@ -323,6 +325,12 @@ const DataEntryPage = () => {
                             {isSubmitting ? 'Processing...' : 'Record Payment'}
                         </button>
                     </form>
+                )}
+
+                {activeTab === 'cleanup' && (
+                    <div>
+                        <CleanInvalidImports />
+                    </div>
                 )}
             </motion.div>
         </div>

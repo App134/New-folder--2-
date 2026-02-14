@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, User, Smartphone, Building2, Wallet, Send, Lightbulb, Zap, Tv, Receipt, X, Loader2, ArrowUpRight, ArrowDownLeft, TrendingUp, ShieldCheck, History, CreditCard, Banknote, Landmark } from 'lucide-react';
+import { QrCode, User, Smartphone, Building2, Wallet, Send, Lightbulb, Zap, Tv, Receipt, X, Loader2, ArrowUpRight, ArrowDownLeft, TrendingUp, ShieldCheck, History, CreditCard, Banknote, Landmark, Trash2 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import SourceBadge from '../../components/common/SourceBadge';
 
 const PhonePeHome = () => {
-    const { addExpenseData, currency, allTransactions } = useData();
+    const { addExpenseData, currency, allTransactions, deleteTransaction } = useData();
     const [showScanner, setShowScanner] = useState(false);
     const [activeFeature, setActiveFeature] = useState(null); // 'Send Money', 'Mobile', etc.
     const [amount, setAmount] = useState('');
@@ -12,6 +14,9 @@ const PhonePeHome = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [balance, setBalance] = useState(null);
     const [balanceLoading, setBalanceLoading] = useState(false);
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, transaction: null });
+    const [deletingId, setDeletingId] = useState(null);
+    const [error, setError] = useState(null);
 
     // Filter relevant transactions
     const recentTransactions = allTransactions
@@ -46,7 +51,7 @@ const PhonePeHome = () => {
                 parseFloat(amount),
                 new Date().toISOString(),
                 'PhonePe Wallet',
-                '', // Source (empty)
+                'phonepe', // Source
                 type // Type (credit/expense/Saving)
             );
 
@@ -79,6 +84,37 @@ const PhonePeHome = () => {
         setActiveFeature(featureName);
         setAmount('');
         setSuccessMsg('');
+    };
+
+    const handleDeleteClick = (transaction) => {
+        setConfirmDialog({ isOpen: true, transaction });
+        setError(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        const transaction = confirmDialog.transaction;
+        if (!transaction || !transaction.originalDoc?.id) {
+            setError('Invalid transaction. Cannot delete.');
+            setConfirmDialog({ isOpen: false, transaction: null });
+            return;
+        }
+
+        setDeletingId(transaction.id);
+        setConfirmDialog({ isOpen: false, transaction: null });
+
+        try {
+            await deleteTransaction(transaction.originalDoc.id);
+            // Success - the real-time listener will update the UI automatically
+        } catch (err) {
+            console.error('Delete error:', err);
+            setError('Failed to delete transaction. Please check your connection and try again.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setConfirmDialog({ isOpen: false, transaction: null });
     };
 
     return (
@@ -222,7 +258,14 @@ const PhonePeHome = () => {
                         <div className="space-y-3 flex-1">
                             {recentTransactions.length > 0 ? (
                                 recentTransactions.map((t, idx) => (
-                                    <TransactionCard key={t.id || idx} t={t} idx={idx} currency={currency} />
+                                    <TransactionCard
+                                        key={t.id || idx}
+                                        t={t}
+                                        idx={idx}
+                                        currency={currency}
+                                        onDelete={handleDeleteClick}
+                                        deletingId={deletingId}
+                                    />
                                 ))
                             ) : (
                                 <div className="text-center py-12 text-muted/50">
@@ -372,6 +415,15 @@ const PhonePeHome = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                title="Delete Transaction"
+                message="Are you sure you want to delete this transaction? This action cannot be undone."
+            />
         </div>
     );
 };
@@ -415,7 +467,7 @@ const ServiceItem = ({ icon: Icon, label, onClick }) => (
     </motion.div>
 );
 
-const TransactionCard = ({ t, idx, currency }) => {
+const TransactionCard = ({ t, idx, currency, onDelete, deletingId }) => {
     // Determine Color & Icon based on Type/Category
     let iconBg = 'bg-background-secondary text-muted';
     let amountColor = 'text-primary-foreground';
@@ -447,19 +499,34 @@ const TransactionCard = ({ t, idx, currency }) => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 + 0.3 }}
-            className="glass-panel p-4 rounded-[20px] flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer group"
+            className={`glass-panel p-4 rounded-[20px] flex items-center justify-between hover:bg-white/5 transition-colors group ${deletingId === t.id ? 'opacity-50 pointer-events-none' : ''}`}
         >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconBg} backdrop-blur-sm shadow-sm`}>
                     <Icon size={20} />
                 </div>
-                <div>
-                    <h4 className="text-primary-foreground font-bold text-sm group-hover:text-primary transition-colors">{t.description}</h4>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-primary-foreground font-bold text-sm group-hover:text-primary transition-colors">{t.description}</h4>
+                        <SourceBadge source={t.source} />
+                    </div>
                     <p className="text-muted text-[10px] font-medium mt-0.5">{new Date(t.date).toLocaleDateString()} • {t.category}</p>
                 </div>
             </div>
-            <div className={`font-bold text-sm ${amountColor}`}>
-                {sign} {currency}{t.amount.toLocaleString()}
+            <div className="flex items-center gap-3">
+                <div className={`font-bold text-sm ${amountColor}`}>
+                    {sign} {currency}{t.amount.toLocaleString()}
+                </div>
+                {/* Delete Button */}
+                <button
+                    onClick={() => onDelete(t)}
+                    disabled={deletingId === t.id}
+                    className="w-8 h-8 rounded-xl bg-danger/10 hover:bg-danger/20 text-danger flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Delete transaction"
+                    title="Delete transaction"
+                >
+                    <Trash2 size={14} />
+                </button>
             </div>
         </motion.div>
     );

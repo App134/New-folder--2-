@@ -35,7 +35,7 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-    const { revenueData, trendData, currency, allTransactions } = useData();
+    const { revenueData, trendData, currency, allTransactions, convertValue } = useData();
     const { currentUser, userProfile } = useAuth();
 
 
@@ -93,7 +93,7 @@ const Dashboard = () => {
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={itemVariants}>
                 <SummaryCard
                     title="Total Income"
-                    amount={`${currency}${totalIncome.toLocaleString()}`}
+                    amount={`${currency}${convertValue(totalIncome).toLocaleString()}`}
                     change={incomeTrend.change}
                     isPositive={incomeTrend.isPositive}
                     icon={DollarSign}
@@ -101,7 +101,7 @@ const Dashboard = () => {
                 />
                 <SummaryCard
                     title="Total Expenses"
-                    amount={`${currency}${totalExpenses.toLocaleString()}`}
+                    amount={`${currency}${convertValue(totalExpenses).toLocaleString()}`}
                     change={expenseTrend.change}
                     isPositive={expenseTrend.isPositive}
                     icon={CreditCard}
@@ -109,7 +109,7 @@ const Dashboard = () => {
                 />
                 <SummaryCard
                     title="Total Savings"
-                    amount={`${currency}${totalSavings.toLocaleString()}`}
+                    amount={`${currency}${convertValue(totalSavings).toLocaleString()}`}
                     change={savingsTrend.change}
                     isPositive={savingsTrend.isPositive}
                     icon={PiggyBank}
@@ -117,7 +117,7 @@ const Dashboard = () => {
                 />
                 <SummaryCard
                     title="Net Worth Trend"
-                    amount={`${currency}${(totalIncome - totalExpenses).toLocaleString()}`}
+                    amount={`${currency}${convertValue(totalIncome - totalExpenses).toLocaleString()}`}
                     change="Overall"
                     isPositive={true}
                     icon={TrendingUp}

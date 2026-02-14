@@ -7,6 +7,8 @@ const GoogleSheetSync = ({ onDataSynced }) => {
     const [sheetUrl, setSheetUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', msg: '' });
+    const [previewData, setPreviewData] = useState(null); // Track previewed data
+    const [previewCount, setPreviewCount] = useState(0); // Count of new records
     const lastTempDataRef = useRef('');
 
     // Export Data State
@@ -19,12 +21,13 @@ const GoogleSheetSync = ({ onDataSynced }) => {
     // Use context
     const { importData, aggregatedData, setTemporaryData, allTransactions } = useData();
 
-    // Auto-load from LocalStorage
+    // Auto-load URL from LocalStorage (but don't fetch data)
     useEffect(() => {
         const savedUrl = localStorage.getItem('googleSheetUrl');
         if (savedUrl) {
             setSheetUrl(savedUrl);
-            fetchAndSetData(savedUrl, false); // Fetch for Display Only (Live View) on Mount
+            // REMOVED: Auto-fetch on page load
+            // User must click "Preview" to fetch data
         }
     }, []);
 
@@ -147,8 +150,8 @@ const GoogleSheetSync = ({ onDataSynced }) => {
                     savings: savVal,
                     description: descVal || 'Sheet Data',
                     category: descVal || 'Imported',
-                    createdAt: finalDate,
-                    id: 'sheet-' + Math.random().toString(36).substr(2, 9) // Temp ID
+                    createdAt: finalDate
+                    // Removed temporary ID - Firestore will generate the real document ID
                 };
             })
                 .filter(item => {
@@ -204,11 +207,14 @@ const GoogleSheetSync = ({ onDataSynced }) => {
                     // Clear preview cache on save so next preview matches
                     lastTempDataRef.current = '';
                 } else {
+                    // Preview mode - store data for later save
+                    setPreviewData(newItems);
+                    setPreviewCount(newItems.length);
                     const newStr = JSON.stringify(newItems);
                     if (newStr !== lastTempDataRef.current) {
                         setTemporaryData(newItems);
                         lastTempDataRef.current = newStr;
-                        setStatus({ type: 'success', msg: `Live Preview: ${newItems.length} new records (others already synced).` });
+                        setStatus({ type: 'success', msg: `Preview: Found ${newItems.length} new records ready to import.` });
                     }
                 }
             }
@@ -227,9 +233,20 @@ const GoogleSheetSync = ({ onDataSynced }) => {
     };
 
     const handlePreview = () => {
-        // Live Preview only
+        // Fetch and preview data (don't save to DB)
+        setPreviewData(null); // Clear previous preview
+        setPreviewCount(0);
         fetchAndSetData(sheetUrl, false);
         localStorage.setItem('googleSheetUrl', sheetUrl);
+    };
+
+    const handleSave = () => {
+        // Save previewed data to DB
+        if (!previewData || previewData.length === 0) {
+            setStatus({ type: 'error', msg: 'No preview data to save. Click "Preview Data" first.' });
+            return;
+        }
+        fetchAndSetData(sheetUrl, true);
     };
 
     // --- EXPORT LOGIC ---
@@ -476,22 +493,22 @@ function doPost(e) {
                         }}
                     >
                         {loading ? <RefreshCw className="spin" size={20} /> : <ExternalLink size={20} />}
-                        Preview
+                        Preview Data
                     </button>
                     <button
-                        onClick={handleSync}
-                        disabled={loading}
+                        onClick={handleSave}
+                        disabled={loading || !previewData || previewCount === 0}
                         style={{
                             padding: '0 1.5rem',
                             borderRadius: '8px',
-                            background: 'var(--accent-primary)',
-                            color: 'white',
+                            background: (previewData && previewCount > 0) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                            color: (previewData && previewCount > 0) ? 'white' : 'var(--text-secondary)',
                             border: 'none',
-                            cursor: loading ? 'wait' : 'pointer',
+                            cursor: (loading || !previewData) ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            opacity: loading ? 0.7 : 1
+                            opacity: (loading || !previewData) ? 0.5 : 1
                         }}
                     >
                         {loading ? <RefreshCw className="spin" size={20} /> : <CloudUpload size={20} />}

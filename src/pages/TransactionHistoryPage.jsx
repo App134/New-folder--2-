@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { FileText, ArrowUpCircle, ArrowDownCircle, Filter, Search, Trash2 } from 'lucide-react';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import SourceBadge from '../components/common/SourceBadge';
 
 const TransactionHistoryPage = () => {
-    const { allTransactions, currency, deleteTransaction } = useData();
+    const { allTransactions, currency, deleteTransaction, convertValue } = useData();
     const [selectedMonth, setSelectedMonth] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, transaction: null });
@@ -113,7 +114,10 @@ const TransactionHistoryPage = () => {
                                                 <ArrowUpCircle size={24} />}
                                     </div>
                                     <div className="flex flex-col flex-1">
-                                        <span className="font-bold text-white text-base md:text-lg group-hover:text-primary transition-colors">{t.description}</span>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-white text-base md:text-lg group-hover:text-primary transition-colors">{t.description}</span>
+                                            <SourceBadge source={t.source} />
+                                        </div>
                                         <span className="text-xs md:text-sm text-muted mt-1 font-medium">{new Date(t.date).toLocaleDateString()} • <span className="uppercase tracking-wide opacity-80">{t.category}</span></span>
                                     </div>
                                 </div>
@@ -123,7 +127,7 @@ const TransactionHistoryPage = () => {
                                             (t.type === 'Investment' || t.type === 'Saving') ? 'text-warning' :
                                                 'text-primary-foreground'
                                             } drop-shadow-sm`}>
-                                            {t.type === 'credit' ? '+' : '-'} {currency}{t.amount.toLocaleString()}
+                                            {t.type === 'credit' ? '+' : '-'} {currency}{convertValue(t.amount).toLocaleString()}
                                         </div>
                                     </div>
                                     {/* Delete Button */}

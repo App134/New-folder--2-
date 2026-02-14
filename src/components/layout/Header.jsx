@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, User, Menu } from 'lucide-react';
+import { Search, Bell, User, Menu, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import NotificationPanel from '../dashboard/NotificationPanel';
@@ -11,7 +11,7 @@ import logo from '../../assets/logo.png';
 const Header = ({ onMenuClick }) => {
     // Get user from Auth Context
     const { currentUser, userProfile } = useAuth();
-    const { alerts, notifications } = useData(); // Use persistent notifications for count
+    const { alerts, notifications, currency, ratesLoading, getConversionRate } = useData();
     const navigate = useNavigate();
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
 
@@ -40,6 +40,17 @@ const Header = ({ onMenuClick }) => {
             <div className="search-bar">
                 <Search size={20} className="search-icon" />
                 <input type="text" placeholder="Search transactions..." />
+                {/* Exchange Rate Info */}
+                {currency !== '₹' && getConversionRate() && (
+                    <div className="flex items-center gap-2 ml-4 text-xs text-muted">
+                        {ratesLoading && <Loader2 className="animate-spin" size={14} />}
+                        {!ratesLoading && (
+                            <span>
+                                1 INR = {getConversionRate()} {currency}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="header-actions">

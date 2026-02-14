@@ -16,6 +16,7 @@ import {
     deleteDoc,
     writeBatch
 } from 'firebase/firestore';
+import { getExchangeRates, convertAmount, getCurrencyCode, getCurrencySymbol } from '../utils/currencyService';
 
 const DataContext = createContext();
 
@@ -29,7 +30,11 @@ export const DataProvider = ({ children }) => {
     const [trendData, setTrendData] = useState([]);
     const [aggregatedData, setAggregatedData] = useState([]); // For DataList
     const [allTransactions, setAllTransactions] = useState([]); // For Transaction History
-    const [currency, setCurrency] = useState('$');
+    const [currency, setCurrency] = useState('₹'); // Display currency symbol
+    const [baseCurrency] = useState('INR'); // Base currency for storage (never changes)
+    const [exchangeRates, setExchangeRates] = useState(null);
+    const [ratesLoading, setRatesLoading] = useState(false);
+    const [ratesLastUpdated, setRatesLastUpdated] = useState(null);
     const [theme, setTheme] = useState('dark');
     const [temporaryData, setTemporaryData] = useState([]);
     const [creditCardPayable, setCreditCardPayable] = useState(0);
@@ -120,6 +125,7 @@ export const DataProvider = ({ children }) => {
                 id: item.id,
                 date: item.createdAt || new Date().toISOString(),
                 month: monthKey,
+                source: item.source || 'manual', // Include source field with fallback
                 originalDoc: item
             };
 
@@ -268,6 +274,17 @@ export const DataProvider = ({ children }) => {
 
     const updateCurrency = async (newCurrency) => {
         setCurrency(newCurrency);
+
+        // Load exchange rates if currency is not INR
+        const currencyCode = getCurrencyCode(newCurrency);
+        if (currencyCode !== 'INR') {
+            await loadExchangeRates();
+        } else {
+            // Reset rates when switching back to INR
+            setExchangeRates(null);
+            setRatesLastUpdated(null);
+        }
+
         if (currentUser) {
             try {
                 const settingsRef = doc(db, 'users', currentUser.uid, 'settings', 'preferences');
@@ -276,6 +293,38 @@ export const DataProvider = ({ children }) => {
                 console.error("Error updating currency:", err);
             }
         }
+    };
+
+    // Load exchange rates from API or cache
+    const loadExchangeRates = async () => {
+        setRatesLoading(true);
+        try {
+            const rates = await getExchangeRates(baseCurrency);
+            setExchangeRates(rates);
+            setRatesLastUpdated(new Date());
+            console.log('Exchange rates loaded:', rates.isFallback ? '(fallback)' : '(live)');
+        } catch (error) {
+            console.error('Failed to load exchange rates:', error);
+        } finally {
+            setRatesLoading(false);
+        }
+    };
+
+    // Convert value from base currency (INR) to display currency
+    const convertValue = (amount) => {
+        if (!amount || amount === 0) return 0;
+        if (currency === '₹') return amount; // No conversion needed for INR
+        if (!exchangeRates) return amount; // Fallback if rates not loaded
+
+        const targetCurrency = getCurrencyCode(currency);
+        return convertAmount(amount, baseCurrency, targetCurrency, exchangeRates);
+    };
+
+    // Get current conversion rate for display
+    const getConversionRate = () => {
+        if (!exchangeRates || currency === '₹') return null;
+        const targetCurrency = getCurrencyCode(currency);
+        return exchangeRates.rates[targetCurrency]?.toFixed(4) || null;
     }
 
 
@@ -363,7 +412,7 @@ export const DataProvider = ({ children }) => {
         // No-op for Firestore listener
     };
 
-    const addRevenueData = async (month, income, expense, date) => {
+    const addRevenueData = async (month, income, expense, date, source = 'manual') => {
         if (!currentUser) throw new Error("User not authenticated");
         const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
         const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
@@ -373,7 +422,8 @@ export const DataProvider = ({ children }) => {
                 month: derivedMonth,
                 income: Number(income),
                 expense: Number(expense),
-                createdAt: entryDate
+                createdAt: entryDate,
+                source
             });
         } catch (err) {
             console.error("Error adding revenue:", err);
@@ -381,7 +431,7 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const addExpenseData = async (month, description, value, date, paymentMethod = 'Debit Card', source = '', type = 'expense') => {
+    const addExpenseData = async (month, description, value, date, paymentMethod = 'Debit Card', source = 'manual', type = 'expense') => {
         if (!currentUser) throw new Error("User not authenticated");
         const entryDate = date ? new Date(date).toISOString() : new Date().toISOString();
         const derivedMonth = new Date(entryDate).toLocaleString('default', { month: 'short' });
@@ -426,7 +476,8 @@ export const DataProvider = ({ children }) => {
                 amount: Number(amount),
                 createdAt: entryDate,
                 type: 'repayment',
-                description: 'Credit Card Repayment'
+                description: 'Credit Card Repayment',
+                source: 'manual'
             });
         } catch (err) {
             console.error("Error adding repayment:", err);
@@ -443,7 +494,8 @@ export const DataProvider = ({ children }) => {
             await addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
                 month: derivedMonth,
                 savings: Number(savings),
-                createdAt: entryDate
+                createdAt: entryDate,
+                source: 'manual'
             });
         } catch (err) {
             console.error("Error adding trend data:", err);
@@ -456,7 +508,8 @@ export const DataProvider = ({ children }) => {
         const promises = newItems.map(item => {
             return addDoc(collection(db, 'users', currentUser.uid, 'financial_data'), {
                 ...item,
-                createdAt: item.createdAt || new Date().toISOString() // Ensure createdAt is preserved if passed
+                createdAt: item.createdAt || new Date().toISOString(), // Ensure createdAt is preserved if passed
+                source: item.source || 'google-sheets' // Tag imports with source
             });
         });
 
@@ -765,6 +818,12 @@ export const DataProvider = ({ children }) => {
             importData,
             currency,
             updateCurrency,
+            baseCurrency,
+            exchangeRates,
+            ratesLoading,
+            ratesLastUpdated,
+            convertValue,
+            getConversionRate,
             budget,
             updateBudget,
             ccDueDate,
