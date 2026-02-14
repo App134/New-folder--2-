@@ -12,16 +12,34 @@
     display: flex;
     flex-direction: column;
     transition: margin-left var(--transition-speed);
+    width: 100%;
 }
 
 .content-area {
-    padding: 0 2rem 2rem;
+    padding: 0 1rem 1rem;
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 640px) {
+    .content-area {
+        padding: 0 1.5rem 1.5rem;
+    }
+}
+
+@media (min-width: 768px) {
     .main-content {
         margin-left: 0;
+    }
+
+    .content-area {
+        padding: 0 2rem 2rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .content-area {
+        padding: 0 2.5rem 2.5rem;
     }
 }

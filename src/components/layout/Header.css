@@ -120,12 +120,27 @@
     border: none;
     cursor: pointer;
     padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
 }
 
+/* Tablet Breakpoint */
+@media (max-width: 1024px) {
+    .header {
+        padding: 0 1.5rem;
+    }
+
+    .search-bar {
+        width: 250px;
+    }
+}
+
+/* Mobile Breakpoint */
 @media (max-width: 768px) {
     .header {
         padding: 0 1rem;
         height: 70px;
+        margin-bottom: 1rem;
     }
 
     .menu-btn {
@@ -136,7 +151,7 @@
 
     .search-bar {
         display: none;
-        /* Optional: hide/collapse search on very small screens or make it an icon toggles */
+        /* Hidden on mobile to save space */
     }
 
     .user-info {
@@ -154,7 +169,7 @@
     }
 
     .mobile-logo-container {
-        display: flex;
+        display: flex !important;
         align-items: center;
         gap: 0.5rem;
     }
@@ -170,6 +185,35 @@
         font-size: 1.1rem;
         color: var(--text-primary);
         letter-spacing: -0.5px;
+    }
+
+    .icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .header {
+        padding: 0 0.75rem;
+        height: 64px;
+    }
+
+    .mobile-logo-text {
+        font-size: 1rem;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
     }
 }
 

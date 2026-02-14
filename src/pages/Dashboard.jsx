@@ -75,7 +75,7 @@ const Dashboard = () => {
 
     return (
         <motion.div
-            className="p-6 lg:p-10 space-y-8 bg-background min-h-screen text-primary-foreground"
+            className="p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 space-y-4 sm:space-y-6 lg:space-y-8 bg-background min-h-screen text-primary-foreground"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -83,14 +83,14 @@ const Dashboard = () => {
             {/* Header */}
             <motion.div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4" variants={itemVariants}>
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
-                    <p className="text-muted mt-1">Welcome back, {userName}. Here's your financial overview.</p>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">Dashboard</h1>
+                    <p className="text-muted mt-1 text-sm sm:text-base">Welcome back, {userName}. Here's your financial overview.</p>
                 </div>
 
             </motion.div>
 
             {/* Summary Cards */}
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={itemVariants}>
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6" variants={itemVariants}>
                 <SummaryCard
                     title="Total Income"
                     amount={`${currency}${convertValue(totalIncome).toLocaleString()}`}
@@ -126,38 +126,38 @@ const Dashboard = () => {
             </motion.div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 xl:gap-8">
                 {/* Main Revenue Chart */}
-                <motion.div className="lg:col-span-2 glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
-                    <div className="mb-6 text-lg font-bold text-white flex justify-between items-center">
+                <motion.div className="lg:col-span-2 glass-panel p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl sm:rounded-3xl lg:rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-4 sm:mb-6 text-base sm:text-lg font-bold text-white flex justify-between items-center">
                         <span>Revenue & Expenses</span>
-                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted hover:text-white transition-colors">
-                            <Calendar size={20} />
+                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted hover:text-white transition-colors touch-target">
+                            <Calendar size={18} className="sm:w-5 sm:h-5" />
                         </button>
                     </div>
                     <RevenueChart />
                 </motion.div>
 
                 {/* Expense Breakdown */}
-                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg flex flex-col" variants={itemVariants}>
-                    <div className="mb-6 text-lg font-bold text-white">Expense Distribution</div>
+                <motion.div className="glass-panel p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl sm:rounded-3xl lg:rounded-[32px] shadow-lg flex flex-col" variants={itemVariants}>
+                    <div className="mb-4 sm:mb-6 text-base sm:text-lg font-bold text-white">Expense Distribution</div>
                     <ExpensePieChart />
                 </motion.div>
             </div>
 
             {/* Secondary Charts & Widgets */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
-                    <div className="mb-6 text-lg font-bold text-white">Category Breakdown</div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 xl:gap-8">
+                <motion.div className="glass-panel p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl sm:rounded-3xl lg:rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-4 sm:mb-6 text-base sm:text-lg font-bold text-white">Category Breakdown</div>
                     <ExpenseBarChart />
                 </motion.div>
 
-                <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg" variants={itemVariants}>
-                    <div className="mb-6 text-lg font-bold text-white">Financial Growth</div>
+                <motion.div className="glass-panel p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl sm:rounded-3xl lg:rounded-[32px] shadow-lg" variants={itemVariants}>
+                    <div className="mb-4 sm:mb-6 text-base sm:text-lg font-bold text-white">Financial Growth</div>
                     <TrendLineChart />
                 </motion.div>
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 sm:gap-5 lg:gap-6">
                     <motion.div variants={itemVariants}>
                         <BillReminder />
                     </motion.div>
@@ -168,27 +168,27 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Transactions Section */}
-            <motion.div className="glass-panel p-6 lg:p-8 rounded-[32px] shadow-lg col-span-12" variants={itemVariants}>
-                <div className="mb-6 text-lg font-bold text-white flex justify-between">
+            <motion.div className="glass-panel p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl sm:rounded-3xl lg:rounded-[32px] shadow-lg col-span-12" variants={itemVariants}>
+                <div className="mb-4 sm:mb-6 text-base sm:text-lg font-bold text-white flex flex-col sm:flex-row justify-between gap-2">
                     <span>Recent Transactions</span>
-                    <span className="text-sm text-muted">Last 5 entries</span>
+                    <span className="text-xs sm:text-sm text-muted">Last 5 entries</span>
                 </div>
-                <div className="w-full overflow-x-auto">
-                    <table className="w-full border-collapse text-sm text-slate-200">
+                <div className="w-full overflow-x-auto table-responsive">
+                    <table className="w-full border-collapse text-xs sm:text-sm text-slate-200">
                         <thead>
                             <tr className="border-b border-white/10">
-                                <th className="p-3 text-left text-muted font-medium">Date</th>
-                                <th className="p-3 text-left text-muted font-medium">Description</th>
-                                <th className="p-3 text-left text-muted font-medium">Category</th>
-                                <th className="p-3 text-right text-muted font-medium">Amount</th>
+                                <th className="p-2 sm:p-3 text-left text-muted font-medium whitespace-nowrap">Date</th>
+                                <th className="p-2 sm:p-3 text-left text-muted font-medium whitespace-nowrap">Description</th>
+                                <th className="p-2 sm:p-3 text-left text-muted font-medium whitespace-nowrap">Category</th>
+                                <th className="p-2 sm:p-3 text-right text-muted font-medium whitespace-nowrap">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {allTransactions && allTransactions.slice(0, 5).map((txn, index) => (
                                 <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                    <td className="p-3 text-primary-foreground">{new Date(txn.date).toLocaleDateString()}</td>
-                                    <td className="p-3 text-primary-foreground font-medium">{txn.description}</td>
-                                    <td className="p-3">
+                                    <td className="p-2 sm:p-3 text-primary-foreground whitespace-nowrap text-xs sm:text-sm">{new Date(txn.date).toLocaleDateString()}</td>
+                                    <td className="p-2 sm:p-3 text-primary-foreground font-medium text-xs sm:text-sm">{txn.description}</td>
+                                    <td className="p-2 sm:p-3">
                                         <span className={`px-2 py-1 rounded-md text-xs font-bold ${txn.type === 'credit' ? 'bg-success/10 text-success' :
                                             (txn.type === 'Investment' || txn.type === 'Saving') ? 'bg-warning/10 text-warning' :
                                                 'bg-danger/10 text-danger'
@@ -196,7 +196,7 @@ const Dashboard = () => {
                                             {txn.category || (txn.type === 'credit' ? 'Income' : (txn.type === 'Investment' || txn.type === 'Saving') ? 'Saving' : 'Expense')}
                                         </span>
                                     </td>
-                                    <td className={`p-3 text-right font-bold ${txn.type === 'credit' ? 'text-success' :
+                                    <td className={`p-2 sm:p-3 text-right font-bold whitespace-nowrap text-xs sm:text-sm ${txn.type === 'credit' ? 'text-success' :
                                         (txn.type === 'Investment' || txn.type === 'Saving') ? 'text-warning' :
                                             'text-primary-foreground'
                                         }`}>

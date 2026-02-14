@@ -84,7 +84,7 @@ const RevenueChart = () => {
     };
 
     return (
-        <div style={{ width: '100%', height: 300 }}>
+        <div style={{ width: '100%', height: '250px', minHeight: '200px' }} className="sm:h-[280px] md:h-[300px]">
             <Bar options={options} data={data} />
         </div>
     );
