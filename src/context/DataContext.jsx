@@ -487,6 +487,16 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const deleteTransaction = async (transactionId) => {
+        if (!currentUser) throw new Error("User not authenticated");
+        try {
+            await deleteDoc(doc(db, 'users', currentUser.uid, 'financial_data', transactionId));
+        } catch (err) {
+            console.error("Error deleting transaction:", err);
+            throw err;
+        }
+    };
+
     const updateGoalAmount = async (goalId, newAmount) => {
         if (!currentUser) return;
         try {
@@ -765,7 +775,7 @@ export const DataProvider = ({ children }) => {
             updateGoalAmount,
             theme,
             updateTheme,
-
+            deleteTransaction,
 
             refreshData,
             setTemporaryData,

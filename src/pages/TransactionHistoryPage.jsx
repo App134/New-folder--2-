@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { FileText, ArrowUpCircle, ArrowDownCircle, Filter, Search } from 'lucide-react';
+import { FileText, ArrowUpCircle, ArrowDownCircle, Filter, Search, Trash2 } from 'lucide-react';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const TransactionHistoryPage = () => {
-    const { allTransactions, currency } = useData();
+    const { allTransactions, currency, deleteTransaction } = useData();
     const [selectedMonth, setSelectedMonth] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, transaction: null });
+    const [deletingId, setDeletingId] = useState(null);
+    const [error, setError] = useState(null);
 
     const MONTHS = ['All', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -19,6 +23,37 @@ const TransactionHistoryPage = () => {
             return matchesMonth && matchesSearch;
         });
     }, [allTransactions, selectedMonth, searchTerm]);
+
+    const handleDeleteClick = (transaction) => {
+        setConfirmDialog({ isOpen: true, transaction });
+        setError(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        const transaction = confirmDialog.transaction;
+        if (!transaction || !transaction.originalDoc?.id) {
+            setError('Invalid transaction. Cannot delete.');
+            setConfirmDialog({ isOpen: false, transaction: null });
+            return;
+        }
+
+        setDeletingId(transaction.id);
+        setConfirmDialog({ isOpen: false, transaction: null });
+
+        try {
+            await deleteTransaction(transaction.originalDoc.id);
+            // Success - the real-time listener will update the UI automatically
+        } catch (err) {
+            console.error('Delete error:', err);
+            setError('Failed to delete transaction. Please check your connection and try again.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setConfirmDialog({ isOpen: false, transaction: null });
+    };
 
     return (
         <div className="p-6 lg:p-10 h-full min-h-screen bg-background text-primary-foreground">
@@ -52,12 +87,23 @@ const TransactionHistoryPage = () => {
                 />
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="mb-6 p-4 rounded-2xl bg-danger/10 border border-danger/20 text-danger">
+                    <p className="font-semibold">{error}</p>
+                </div>
+            )}
+
             <div className="glass-panel rounded-[32px] overflow-hidden shadow-lg border border-white/5">
                 {filteredTransactions.length > 0 ? (
                     <div className="divide-y divide-white/5">
                         {filteredTransactions.map((t, index) => (
-                            <div key={t.id + index} className="flex justify-between items-center p-4 md:p-6 hover:bg-white/5 transition-colors group cursor-pointer">
-                                <div className="flex items-center gap-4 md:gap-6">
+                            <div
+                                key={t.id + index}
+                                className={`flex justify-between items-center p-4 md:p-6 hover:bg-white/5 transition-all group ${deletingId === t.id ? 'opacity-50 pointer-events-none' : ''
+                                    }`}
+                            >
+                                <div className="flex items-center gap-4 md:gap-6 flex-1">
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${t.type === 'credit' ? 'bg-success/10 text-success' :
                                         (t.type === 'Investment' || t.type === 'Saving') ? 'bg-warning/10 text-warning' :
                                             'bg-danger/10 text-danger'
@@ -66,18 +112,30 @@ const TransactionHistoryPage = () => {
                                             (t.type === 'Investment' || t.type === 'Saving') ? <ArrowUpCircle size={24} className="rotate-45" /> :
                                                 <ArrowUpCircle size={24} />}
                                     </div>
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col flex-1">
                                         <span className="font-bold text-white text-base md:text-lg group-hover:text-primary transition-colors">{t.description}</span>
                                         <span className="text-xs md:text-sm text-muted mt-1 font-medium">{new Date(t.date).toLocaleDateString()} • <span className="uppercase tracking-wide opacity-80">{t.category}</span></span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className={`font-bold text-base md:text-lg ${t.type === 'credit' ? 'text-success' :
-                                        (t.type === 'Investment' || t.type === 'Saving') ? 'text-warning' :
-                                            'text-primary-foreground'
-                                        } drop-shadow-sm`}>
-                                        {t.type === 'credit' ? '+' : '-'} {currency}{t.amount.toLocaleString()}
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <div className={`font-bold text-base md:text-lg ${t.type === 'credit' ? 'text-success' :
+                                            (t.type === 'Investment' || t.type === 'Saving') ? 'text-warning' :
+                                                'text-primary-foreground'
+                                            } drop-shadow-sm`}>
+                                            {t.type === 'credit' ? '+' : '-'} {currency}{t.amount.toLocaleString()}
+                                        </div>
                                     </div>
+                                    {/* Delete Button */}
+                                    <button
+                                        onClick={() => handleDeleteClick(t)}
+                                        disabled={deletingId === t.id}
+                                        className="w-10 h-10 rounded-xl bg-danger/10 hover:bg-danger/20 text-danger flex items-center justify-center transition-all opacity-0 md:group-hover:opacity-100 md:opacity-0 sm:opacity-100 focus:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        aria-label="Delete transaction"
+                                        title="Delete transaction"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -92,8 +150,18 @@ const TransactionHistoryPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                title="Delete Transaction"
+                message="Are you sure you want to delete this transaction? This action cannot be undone."
+            />
         </div>
     );
 };
 
 export default TransactionHistoryPage;
+
