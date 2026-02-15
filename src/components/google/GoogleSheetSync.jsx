@@ -333,33 +333,33 @@ function doPost(e) {
     };
 
     return (
-        <div className="google-sync-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="flex flex-col gap-4 sm:gap-6">
 
             {/* --- EXPORT SECTION (NEW) --- */}
-            <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px' }}>
-                            <FileSpreadsheet size={24} color="#3b82f6" />
+            <div className="p-4 sm:p-6 bg-secondary rounded-xl border border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
+                            <FileSpreadsheet size={20} className="sm:w-6 sm:h-6 text-blue-500" />
                         </div>
-                        <div>
-                            <h3 style={{ margin: 0 }}>Export to Google Sheets</h3>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Send your dashboard data to a Sheet</p>
+                        <div className="min-w-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-primary m-0">Export to Google Sheets</h3>
+                            <p className="text-xs sm:text-sm text-muted m-0 truncate">Send your dashboard data to a Sheet</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowGuide(!showGuide)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                        className="flex items-center gap-1 text-muted hover:text-primary transition-colors bg-transparent border-none cursor-pointer text-sm self-start sm:self-auto"
                     >
-                        <HelpCircle size={16} /> Setup Guide
+                        <HelpCircle size={16} />Setup Guide
                     </button>
                 </div>
 
                 {/* GUIDE COLLAPSIBLE */}
                 {showGuide && (
-                    <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid var(--border-color)' }}>
-                        <h4 style={{ marginTop: 0 }}>How to Setup Export:</h4>
-                        <ol style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                    <div className="bg-primary p-3 sm:p-4 rounded-lg mb-4 border border-border">
+                        <h4 className="mt-0 mb-3 text-sm sm:text-base font-semibold">How to Setup Export:</h4>
+                        <ol className="pl-5 text-muted text-xs sm:text-sm leading-relaxed space-y-1">
                             <li>Create a new Google Sheet.</li>
                             <li>Go to <strong>Extensions {'>'} Apps Script</strong>.</li>
                             <li>Paste the code below into the editor.</li>
@@ -369,14 +369,14 @@ function doPost(e) {
                             <li>Set "Who has access": <strong>Anyone</strong> (Important!).</li>
                             <li>Click <strong>Deploy</strong> and copy the <strong>Web App URL</strong>.</li>
                         </ol>
-                        <div style={{ position: 'relative', marginTop: '0.5rem' }}>
+                        <div className="relative mt-2">
                             <button
                                 onClick={copyCode}
-                                style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                className="absolute top-2 right-2 px-2 py-1 text-xs cursor-pointer bg-secondary border border-border rounded flex items-center gap-1 text-primary hover:bg-card transition-colors z-10"
                             >
                                 {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy Code'}
                             </button>
-                            <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1rem', borderRadius: '6px', overflowX: 'auto', fontSize: '0.8rem' }}>
+                            <pre className="bg-[#1e1e1e] text-[#d4d4d4] p-3 sm:p-4 rounded-md overflow-x-auto text-[10px] sm:text-xs">
                                 {`function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var rawData = JSON.parse(e.postData.contents);
@@ -397,137 +397,86 @@ function doPost(e) {
                     </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                     <input
                         type="text"
                         placeholder="Paste Web App URL here..."
                         value={scriptUrl}
                         onChange={(e) => setScriptUrl(e.target.value)}
-                        style={{
-                            flex: 1,
-                            padding: '0.75rem',
-                            borderRadius: '8px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-primary)',
-                            color: 'var(--text-primary)'
-                        }}
+                        className="flex-1 px-3 py-2 sm:py-3 rounded-lg border border-border bg-primary text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                         onClick={handleExport}
                         disabled={exportLoading}
-                        style={{
-                            padding: '0 1.5rem',
-                            borderRadius: '8px',
-                            background: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            cursor: exportLoading ? 'wait' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            opacity: exportLoading ? 0.7 : 1
-                        }}
+                        className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-blue-500 text-white border-none cursor-pointer flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors disabled:opacity-70 disabled:cursor-wait text-sm sm:text-base whitespace-nowrap"
                     >
-                        {exportLoading ? <RefreshCw className="spin" size={20} /> : <Download size={20} />}
-                        Export
+                        {exportLoading ? <RefreshCw className="spin" size={18} /> : <Download size={18} />}
+                        <span className="hidden sm:inline">Export</span>
+                        <span className="sm:hidden">Export</span>
                     </button>
                 </div>
 
                 {exportStatus.msg && (
-                    <div style={{
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        background: exportStatus.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                        color: exportStatus.type === 'error' ? 'var(--accent-danger)' : '#3b82f6',
-                        fontSize: '0.9rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        {exportStatus.type === 'error' ? '⚠️' : '✅'} {exportStatus.msg}
+                    <div className={`p-3 rounded-lg text-xs sm:text-sm flex items-center gap-2 ${exportStatus.type === 'error'
+                            ? 'bg-red-500/10 text-red-500'
+                            : 'bg-blue-500/10 text-blue-500'
+                        }`}>
+                        {exportStatus.type === 'error' ? '⚠️' : '✅'}
+                        <span className="break-words">{exportStatus.msg}</span>
                     </div>
                 )}
             </div>
 
             {/* --- SYNC SECTION (EXISTING) --- */}
-            <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
-                        <Database size={24} color="var(--accent-success)" />
+            <div className="p-4 sm:p-6 bg-secondary rounded-xl border border-border">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-green-500/10 rounded-lg flex-shrink-0">
+                        <Database size={20} className="sm:w-6 sm:h-6 text-green-500" />
                     </div>
-                    <div>
-                        <h3 style={{ margin: 0 }}>Import from Google Sheets</h3>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Sync data from a published CSV</p>
+                    <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-primary m-0">Import from Google Sheets</h3>
+                        <p className="text-xs sm:text-sm text-muted m-0 truncate">Sync data from a published CSV</p>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div className="flex flex-col gap-2 mb-4">
                     <input
                         type="text"
                         placeholder="Paste Published CSV URL here..."
                         value={sheetUrl}
                         onChange={(e) => setSheetUrl(e.target.value)}
-                        style={{
-                            flex: 1,
-                            padding: '0.75rem',
-                            borderRadius: '8px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-primary)',
-                            color: 'var(--text-primary)'
-                        }}
+                        className="w-full px-3 py-2 sm:py-3 rounded-lg border border-border bg-primary text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
-                    <button
-                        onClick={handlePreview}
-                        disabled={loading}
-                        style={{
-                            padding: '0 1.5rem',
-                            borderRadius: '8px',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--accent-primary)',
-                            color: 'var(--accent-primary)',
-                            cursor: loading ? 'wait' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            opacity: loading ? 0.7 : 1
-                        }}
-                    >
-                        {loading ? <RefreshCw className="spin" size={20} /> : <ExternalLink size={20} />}
-                        Preview Data
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={loading || !previewData || previewCount === 0}
-                        style={{
-                            padding: '0 1.5rem',
-                            borderRadius: '8px',
-                            background: (previewData && previewCount > 0) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                            color: (previewData && previewCount > 0) ? 'white' : 'var(--text-secondary)',
-                            border: 'none',
-                            cursor: (loading || !previewData) ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            opacity: (loading || !previewData) ? 0.5 : 1
-                        }}
-                    >
-                        {loading ? <RefreshCw className="spin" size={20} /> : <CloudUpload size={20} />}
-                        Save to DB
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                            onClick={handlePreview}
+                            disabled={loading}
+                            className="flex-1 px-4 py-2 sm:py-3 rounded-lg bg-secondary border border-primary text-primary cursor-pointer flex items-center justify-center gap-2 hover:bg-card transition-colors disabled:opacity-70 disabled:cursor-wait text-sm whitespace-nowrap"
+                        >
+                            {loading ? <RefreshCw className="spin" size={18} /> : <ExternalLink size={18} />}
+                            Preview Data
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={loading || !previewData || previewCount === 0}
+                            className={`flex-1 px-4 py-2 sm:py-3 rounded-lg border-none flex items-center justify-center gap-2 transition-colors text-sm whitespace-nowrap ${(previewData && previewCount > 0)
+                                    ? 'bg-primary text-white cursor-pointer hover:opacity-90'
+                                    : 'bg-secondary text-muted cursor-not-allowed opacity-50'
+                                }`}
+                        >
+                            {loading ? <RefreshCw className="spin" size={18} /> : <CloudUpload size={18} />}
+                            Save to DB
+                        </button>
+                    </div>
                 </div>
 
                 {status.msg && (
-                    <div style={{
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        background: status.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                        color: status.type === 'error' ? 'var(--accent-danger)' : 'var(--accent-success)',
-                        fontSize: '0.9rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        {status.type === 'error' ? '⚠️' : '✅'} {status.msg}
+                    <div className={`p-3 rounded-lg text-xs sm:text-sm flex items-center gap-2 ${status.type === 'error'
+                            ? 'bg-red-500/10 text-red-500'
+                            : 'bg-green-500/10 text-green-500'
+                        }`}>
+                        {status.type === 'error' ? '⚠️' : '✅'}
+                        <span className="break-words">{status.msg}</span>
                     </div>
                 )}
             </div>
