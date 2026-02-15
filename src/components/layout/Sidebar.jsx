@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Wallet, Settings, LogOut, PlusCircle, FileSpreadsheet, CreditCard } from 'lucide-react';
-
+import './Sidebar.css';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -46,15 +46,15 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     return (
         <>
-            {/* Overlay for mobile */}
+            {/* Overlay for mobile/tablet */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-background/80 z-40 md:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-background/80 z-40 lg:hidden backdrop-blur-sm"
                     onClick={onClose}
                 />
             )}
 
-            <aside className={`w-[250px] min-h-screen bg-background-secondary border-r border-white/5 flex flex-col p-6 fixed left-0 top-0 z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+            <aside className={`w-[250px] min-h-screen bg-background-secondary border-r border-white/5 flex flex-col p-6 fixed left-0 top-0 z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 }`}>
                 <div className="flex items-center gap-4 mb-12">
                     <div className="flex items-center justify-center shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-neon overflow-hidden">

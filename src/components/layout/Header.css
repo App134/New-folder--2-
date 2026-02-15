@@ -113,7 +113,9 @@
 }
 
 .menu-btn {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 1rem;
     color: var(--text-primary);
     background: none;
@@ -122,6 +124,13 @@
     padding: 0.5rem;
     min-width: 44px;
     min-height: 44px;
+}
+
+/* Hide menu button on desktop (1024px+) */
+@media (min-width: 1024px) {
+    .menu-btn {
+        display: none;
+    }
 }
 
 /* Tablet Breakpoint */
@@ -141,12 +150,6 @@
         padding: 0 1rem;
         height: 70px;
         margin-bottom: 1rem;
-    }
-
-    .menu-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .search-bar {
