@@ -25,25 +25,9 @@ const DashboardLayout = ({ children }) => {
                     {children ? children : <Dashboard />}
                 </div>
                 <Footer />
-                {/* Mobile Overlay */}
-                {isSidebarOpen && (
-                    <div
-                        className="sidebar-overlay"
-                        onClick={closeSidebar}
-                        style={{
-                            position: 'fixed',
-                            inset: 0,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            zIndex: 90,
-                            backdropFilter: 'blur(2px)'
-                        }}
-                    />
-                )}
             </main>
         </div>
     );
 };
-
-// HELLO WORLD;
 
 export default DashboardLayout;

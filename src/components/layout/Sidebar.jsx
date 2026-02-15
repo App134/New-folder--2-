@@ -23,7 +23,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
 
     const handleNavClick = () => {
-        if (window.innerWidth <= 768 && onClose) {
+        if (window.innerWidth <= 1023 && onClose) {
             onClose();
         }
     };
@@ -46,16 +46,30 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     return (
         <>
-            {/* Overlay for mobile/tablet */}
+            {/* Overlay for mobile/tablet - MUST be below sidebar in z-index */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-background/80 z-40 lg:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/50 z-[90] lg:hidden backdrop-blur-sm transition-opacity duration-300"
                     onClick={onClose}
+                    style={{ pointerEvents: 'auto' }}
                 />
             )}
 
-            <aside className={`w-[250px] min-h-screen bg-background-secondary border-r border-white/5 flex flex-col p-6 fixed left-0 top-0 z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-                }`}>
+            {/* Sidebar - MUST have higher z-index than overlay */}
+            <aside
+                className={`
+                    fixed left-0 top-0 h-screen
+                    w-[280px] max-w-[85vw]
+                    bg-background-secondary border-r border-white/5
+                    flex flex-col p-6
+                    z-[100]
+                    transition-transform duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                    lg:translate-x-0 lg:w-[250px]
+                    shadow-2xl lg:shadow-none
+                `}
+                style={{ pointerEvents: 'auto' }}
+            >
                 <div className="flex items-center gap-4 mb-12">
                     <div className="flex items-center justify-center shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-neon overflow-hidden">
                         <img src={logo} alt="Logo" className="w-full h-full object-cover mix-blend-screen" />
@@ -63,7 +77,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <h1 className="text-xl font-bold tracking-tight text-white">FinanceFlow</h1>
                 </div>
 
-                <nav className="flex-1">
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden">
                     <ul className="flex flex-col gap-2">
                         <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
                         <NavItem to="/data-entry" icon={PlusCircle} label="Data Entry" />
@@ -74,7 +88,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-white/5">
-
                     <button
                         className="flex items-center gap-4 w-full px-4 py-3 rounded-xl text-muted transition-all hover:bg-danger/10 hover:text-danger text-base group"
                         onClick={handleLogout}

@@ -1,33 +1,33 @@
-/* Sidebar Responsive Styles */
-.sidebar {
-    width: 250px;
-    min-height: 100vh;
-    background-color: var(--bg-secondary);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 50;
-    transition: transform 0.3s ease;
+/* Sidebar Responsive Styles - Minimal CSS to avoid Tailwind conflicts */
+
+/* Additional styling not covered by Tailwind */
+.sidebar nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-/* Mobile: Hidden by default, slides in when open */
-@media (max-width: 1023px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
+.sidebar nav::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Desktop: Always visible */
-@media (min-width: 1024px) {
-    .sidebar {
-        transform: translateX(0) !important;
+.sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure smooth transitions */
+@media (prefers-reduced-motion: reduce) {
+
+    .sidebar,
+    .sidebar * {
+        transition-duration: 0.01ms !important;
     }
 }
