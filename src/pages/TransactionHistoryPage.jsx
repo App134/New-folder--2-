@@ -60,17 +60,17 @@ const TransactionHistoryPage = () => {
         <div className="p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 h-full min-h-screen bg-background text-primary-foreground">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
                 <div className="flex flex-col">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">Finance History</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">Finance History</h1>
                     <p className="text-muted text-xs sm:text-sm mt-1">Track all your income and expenses</p>
                 </div>
                 <div className="flex gap-3 sm:gap-4 items-center w-full md:w-auto justify-between">
                     <div className="relative">
                         <select
-                            className="p-2.5 sm:p-3 rounded-xl bg-background-card text-white text-sm sm:text-base border border-white/10 outline-none cursor-pointer hover:bg-white/5 transition-colors focus:ring-2 focus:ring-primary/50 min-w-[100px]"
+                            className="p-2.5 sm:p-3 rounded-xl bg-background-card text-foreground text-sm sm:text-base border border-white/10 outline-none cursor-pointer hover:bg-white/5 transition-colors focus:ring-2 focus:ring-primary/50 min-w-[100px]"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
                         >
-                            {MONTHS.map(m => <option key={m} value={m} className="bg-slate-900 text-white">{m}</option>)}
+                            {MONTHS.map(m => <option key={m} value={m} className="bg-background-card text-foreground">{m}</option>)}
                         </select>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ const TransactionHistoryPage = () => {
                     placeholder="Search by name, category, or amount..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 text-sm sm:text-base rounded-xl sm:rounded-2xl border border-white/10 bg-background-card text-white outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-lg placeholder-muted"
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 text-sm sm:text-base rounded-xl sm:rounded-2xl border border-white/10 bg-background-card text-foreground outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-lg placeholder-muted"
                 />
             </div>
 
@@ -115,7 +115,7 @@ const TransactionHistoryPage = () => {
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-bold text-white text-sm sm:text-base md:text-lg group-hover:text-primary transition-colors truncate">{t.description}</span>
+                                            <span className="font-bold text-foreground text-sm sm:text-base md:text-lg group-hover:text-primary transition-colors truncate">{t.description}</span>
                                             <SourceBadge source={t.source} />
                                         </div>
                                         <span className="text-xs sm:text-sm text-muted mt-1 font-medium">{new Date(t.date).toLocaleDateString()} • <span className="uppercase tracking-wide opacity-80">{t.category}</span></span>
@@ -149,7 +149,7 @@ const TransactionHistoryPage = () => {
                         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-background-card rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-inner">
                             <FileText size={32} className="sm:w-10 sm:h-10 opacity-40" />
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-white mb-1">No transactions found</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-foreground mb-1">No transactions found</h3>
                         <p className="text-xs sm:text-sm">Try adjusting your search or filters.</p>
                     </div>
                 )}

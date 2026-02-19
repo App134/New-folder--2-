@@ -50,7 +50,7 @@ const UserPage = () => {
         <div className="p-6 lg:p-10 min-h-screen bg-background text-primary-foreground font-sans">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight">User Settings</h1>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">User Settings</h1>
                 <p className="text-muted text-sm mt-1">Manage your profile and preferences</p>
             </div>
 
@@ -64,10 +64,10 @@ const UserPage = () => {
                         <div className="relative z-10">
                             <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary p-[3px] mb-4 shadow-neon">
                                 <div className="w-full h-full rounded-full bg-background-secondary flex items-center justify-center">
-                                    <User size={40} className="text-white" />
+                                    <User size={40} className="text-foreground" />
                                 </div>
                             </div>
-                            <h2 className="text-xl font-bold text-white mb-1">{userProfile?.username || currentUser?.displayName || 'User'}</h2>
+                            <h2 className="text-xl font-bold text-foreground mb-1">{userProfile?.username || currentUser?.displayName || 'User'}</h2>
                             <p className="text-sm text-muted mb-6">{currentUser?.email || 'No email'}</p>
 
                             <button
@@ -88,7 +88,7 @@ const UserPage = () => {
                     <div className="glass-panel p-8 rounded-[32px] border border-white/5 shadow-lg">
                         <div className="flex items-center gap-3 mb-6">
                             <span className="p-2 rounded-lg bg-primary/10 text-primary"><User size={20} /></span>
-                            <h3 className="text-lg font-bold text-white">Public Profile</h3>
+                            <h3 className="text-lg font-bold text-foreground">Public Profile</h3>
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-6">
@@ -99,7 +99,7 @@ const UserPage = () => {
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
                                     placeholder="Enter your name"
-                                    className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                    className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                                 />
                             </div>
 
@@ -123,7 +123,7 @@ const UserPage = () => {
                     <div className="glass-panel p-8 rounded-[32px] border border-white/5 shadow-lg">
                         <div className="flex items-center gap-3 mb-6">
                             <span className="p-2 rounded-lg bg-warning/10 text-warning"><Shield size={20} /></span>
-                            <h3 className="text-lg font-bold text-white">Preferences</h3>
+                            <h3 className="text-lg font-bold text-foreground">Preferences</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -134,12 +134,12 @@ const UserPage = () => {
                                     <select
                                         value={currency}
                                         onChange={(e) => updateCurrency(e.target.value)}
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors appearance-none"
                                     >
-                                        <option value="$" className="bg-slate-900">USD ($)</option>
-                                        <option value="₹" className="bg-slate-900">INR (₹)</option>
-                                        <option value="€" className="bg-slate-900">EUR (€)</option>
-                                        <option value="£" className="bg-slate-900">GBP (£)</option>
+                                        <option value="$" className="bg-background-card">USD ($)</option>
+                                        <option value="₹" className="bg-background-card">INR (₹)</option>
+                                        <option value="€" className="bg-background-card">EUR (€)</option>
+                                        <option value="£" className="bg-background-card">GBP (£)</option>
                                     </select>
                                     <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted rotate-90" />
                                 </div>
@@ -151,12 +151,12 @@ const UserPage = () => {
                                     <select
                                         value={theme}
                                         onChange={(e) => updateTheme(e.target.value)}
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors appearance-none"
                                     >
-                                        <option value="dark" className="bg-slate-900">Dark</option>
-                                        <option value="light" className="bg-slate-900">Light</option>
-                                        <option value="midnight" className="bg-slate-900">Midnight</option>
-                                        <option value="ocean" className="bg-slate-900">Ocean</option>
+                                        <option value="dark" className="bg-background-card">Dark</option>
+                                        <option value="light" className="bg-background-card">Light</option>
+                                        <option value="midnight" className="bg-background-card">Midnight</option>
+                                        <option value="ocean" className="bg-background-card">Ocean</option>
                                     </select>
                                     <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted rotate-90" />
                                 </div>

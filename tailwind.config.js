@@ -13,6 +13,7 @@ export default {
                     secondary: 'var(--bg-secondary)', // Slightly lighter navy
                     card: 'var(--bg-card)', // Glassy navy
                 },
+                foreground: 'var(--text-primary)',
                 primary: {
                     DEFAULT: 'var(--primary)', // Electric Cyan
                     foreground: 'var(--primary-foreground)',

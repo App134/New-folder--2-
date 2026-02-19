@@ -90,7 +90,7 @@ const DataEntryPage = () => {
         <div className="p-6 lg:p-10 min-h-screen bg-background text-primary-foreground font-sans">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight">Financial Data Entry</h1>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">Financial Data Entry</h1>
                 <p className="text-muted text-sm mt-1">Track your flow. Manage your growth.</p>
             </div>
 
@@ -103,7 +103,7 @@ const DataEntryPage = () => {
                         className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-bold text-sm uppercase tracking-wide
                             ${activeTab === tab
                                 ? 'bg-primary/20 text-primary border border-primary/50 shadow-neon'
-                                : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white border border-white/5'
+                                : 'bg-white/5 text-muted hover:bg-white/10 hover:text-foreground border border-white/5'
                             }`}
                     >
                         {tab === 'expense' && <Wallet size={18} />}
@@ -135,7 +135,7 @@ const DataEntryPage = () => {
                         {activeTab === 'revenue' && <TrendingUp size={24} />}
                         {activeTab === 'repayment' && <CreditCard size={24} />}
                     </div>
-                    <h2 className="text-2xl font-bold text-white capitalize">Record {activeTab}</h2>
+                    <h2 className="text-2xl font-bold text-foreground capitalize">Record {activeTab}</h2>
                 </div>
 
                 <AnimatePresence>
@@ -174,7 +174,7 @@ const DataEntryPage = () => {
                                 onChange={(e) => setExpenseDescription(e.target.value)}
                                 required
                                 autoFocus
-                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -187,7 +187,7 @@ const DataEntryPage = () => {
                                         value={expenseDate}
                                         onChange={(e) => setExpenseDate(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
                             </div>
@@ -201,7 +201,7 @@ const DataEntryPage = () => {
                                         value={expenseAmount}
                                         onChange={(e) => setExpenseAmount(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-foreground font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                                     />
                                 </div>
                             </div>
@@ -212,12 +212,12 @@ const DataEntryPage = () => {
                             <select
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value)}
-                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                             >
-                                <option value="Debit Card" className="bg-slate-900">Debit Card</option>
-                                <option value="Credit Card" className="bg-slate-900">Credit Card</option>
-                                <option value="Cash" className="bg-slate-900">Cash</option>
-                                <option value="From Savings" className="bg-slate-900">From Savings</option>
+                                <option value="Debit Card" className="bg-background-card">Debit Card</option>
+                                <option value="Credit Card" className="bg-background-card">Credit Card</option>
+                                <option value="Cash" className="bg-background-card">Cash</option>
+                                <option value="From Savings" className="bg-background-card">From Savings</option>
                             </select>
                         </div>
 
@@ -230,7 +230,7 @@ const DataEntryPage = () => {
                                     value={savingsSource}
                                     onChange={(e) => setSavingsSource(e.target.value)}
                                     required
-                                    className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                    className="w-full bg-background-card border border-white/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                                 />
                             </div>
                         )}
@@ -238,7 +238,7 @@ const DataEntryPage = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full bg-gradient-to-r from-red-600 to-rose-500 hover:shadow-[0_0_20px_var(--danger)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                            className="w-full bg-gradient-to-r from-red-600 to-rose-500 hover:shadow-[0_0_20px_var(--danger)] text-foreground font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
                         >
                             {isSubmitting ? 'Saving...' : 'Add Expense'}
                         </button>
@@ -257,7 +257,7 @@ const DataEntryPage = () => {
                                         value={revenueDate}
                                         onChange={(e) => setRevenueDate(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
                             </div>
@@ -271,7 +271,7 @@ const DataEntryPage = () => {
                                         value={revenueIncome}
                                         onChange={(e) => setRevenueIncome(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-foreground font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                                     />
                                 </div>
                             </div>
@@ -279,7 +279,7 @@ const DataEntryPage = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-[0_0_20px_var(--success)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-[0_0_20px_var(--success)] text-foreground font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
                         >
                             {isSubmitting ? 'Saving...' : 'Add Revenue'}
                         </button>
@@ -298,7 +298,7 @@ const DataEntryPage = () => {
                                         value={repaymentDate}
                                         onChange={(e) => setRepaymentDate(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-12 pr-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                                     />
                                 </div>
                             </div>
@@ -312,7 +312,7 @@ const DataEntryPage = () => {
                                         value={repaymentAmount}
                                         onChange={(e) => setRepaymentAmount(e.target.value)}
                                         required
-                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
+                                        className="w-full bg-background-card border border-white/10 rounded-xl pl-10 pr-4 py-3 text-foreground font-bold text-lg focus:outline-none focus:border-primary/50 transition-colors placeholder-white/10"
                                     />
                                 </div>
                             </div>
@@ -320,7 +320,7 @@ const DataEntryPage = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:shadow-[0_0_20px_var(--primary)] text-white font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
+                            className="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:shadow-[0_0_20px_var(--primary)] text-foreground font-bold py-4 rounded-xl transition-all disabled:opacity-70 mt-4"
                         >
                             {isSubmitting ? 'Processing...' : 'Record Payment'}
                         </button>
